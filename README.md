@@ -11,13 +11,13 @@ This gem contains several utility classes for common tasks in Ruby applications 
 
 ### Logging
 
-NYPLRubyUtil::NyplLogFormatter
+`NYPLRubyUtil::NyplLogFormatter`
 
 (description to come)
 
 ### HTTP Requests to Sierra
 
-NYPLRubyUtil::SierraApiClient
+`NYPLRubyUtil::SierraApiClient`
 
 #### Configuration
 
@@ -68,19 +68,19 @@ In the spirit of agnosticism, the client will not intentionally raise an error w
 
 ### HTTP Requests to Platform
 
-NYPLRubyUtil::PlatformApiClient
+`NYPLRubyUtil::PlatformApiClient`
 
 (description to come)
 
 ### Avro Encoding and Decoding
 
-NYPLRubyUtil::NYPLAvro
+`NYPLRubyUtil::NYPLAvro`
 
 (description to come)
 
 ### KMS Encryption and Decryption
 
-NYPLRubyUtil::KmsClient
+`NYPLRubyUtil::KmsClient`
 
 (description to come)
 
