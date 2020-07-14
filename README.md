@@ -3,6 +3,10 @@
 
 This gem contains several utility classes for common tasks in Ruby applications deployed to AWS.
 
+## Version
+
+`0.0.0`
+
 ## Installation
 
 `gem install nypl_ruby_util`
@@ -13,7 +17,68 @@ This gem contains several utility classes for common tasks in Ruby applications 
 
 `NYPLRubyUtil::NyplLogFormatter`
 
-(description to come)
+#### Usage
+
+```ruby
+require 'nypl_log_formatter'
+
+my_logger = NyplLogFormatter.new('path/to/file.log')
+my_logger.info('this will log JSON')
+my_logger.warn('So will this')
+
+# Contents of file.log
+  # Logfile created on 2018-01-17 15:51:31 -0500 by logger.rb/61378
+  #{"level":"INFO","message":"this will log JSON","timestamp":"2018-01-17T15:51:53.481-0500"}
+  #{"level":"WARN","message":"So will this","timestamp":"2018-01-17T15:51:54.279-0500"}
+```
+
+#### Instantiating A Logger
+
+The constructor (and all other methods, really) of NyplLogFormatter are the same as a Logger.
+Which means you can do EVERYTHING you can with a `Logger`, in the same way.
+That includes:
+
+* Setting Log level
+* Using `STDOUT` instead of a file.
+* Setting log rotation.
+
+For more info see your ruby version's documentation for the `Logger` class.
+
+#### Logging Additional Key/Value Pairs
+
+You can pass a second argument, a Hash that will end up as keys/values in the
+logged JSON.
+
+```ruby
+logger = NYPLRubyUtil::NyplLogFormatter.new('path/to/file.log')
+
+logger.error(
+  'Something went wrong',
+  user: {email: 'simon@example.com', name: 'simon'},
+  permissions: ['admin', 'good-boy']
+)
+
+# Contents of file.log
+  # Logfile created on 2018-01-17 15:51:31 -0500 by logger.rb/61378
+  #{"level":"ERROR","message":"Something went wrong","timestamp":"2018-02-07T16:47:22.017-0500","user":{"email":"simon@example.com","name":"simon"},"permissions":["admin","good-boy"]}
+
+```
+
+#### Logging Levels
+
+You can set logging threshold to control what severity of log is written either in the initializer:
+
+```
+Application.logger = NYPLRubyUtil::NyplLogFormatter.new(STDOUT, level: 'info')
+```
+
+Or using the `level=` setter:
+
+```
+Application.logger.level = 'info'
+```
+
+See [Logger notes on supported levels](https://github.com/ruby/logger/blob/78725003c190275f2e8a7c84af038c3c6d9e8209/lib/logger.rb#L168-L191)
 
 ### HTTP Requests to Sierra
 

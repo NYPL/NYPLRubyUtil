@@ -8,6 +8,7 @@ Gem::Specification.new do |s|
   s.files = ["lib/nypl_ruby_util.rb",
     "lib/directory.rb",
     "lib/errors.rb",
+    "lib/kinesis_client.rb",
     "lib/kms_client.rb",
     "lib/nypl_avro.rb",
     "lib/platform_api_client.rb"

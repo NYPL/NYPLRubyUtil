@@ -1,5 +1,6 @@
 require 'securerandom'
 require 'aws-sdk'
+require_relative 'nypl_avro'
 # Model representing the result message posted to Kinesis stream about everything that has gone on here -- good, bad, or otherwise.
 
 class KinesisClient
@@ -10,7 +11,11 @@ class KinesisClient
   end
 
   def <<(json_message)
-    message = Stream.encode(json_message) ## needs to be fixed
+    if config[:schema_string]
+      message = NYPLAvro.new(config[:schema_string]).encode(json_message)
+    else
+      message = json_message
+    end
     client = Aws::Kinesis::Client.new
 
     resp = client.put_record({
