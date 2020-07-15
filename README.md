@@ -228,7 +228,7 @@ Assumes the encoded string is base64 encoded
 
 #### Initializing
 
-`kinsesis_client = NYPLRubyUtil::KinesisClient.new(config)`
+`kinesis_client = NYPLRubyUtil::KinesisClient.new(config)`
 
 The currently used parameters for config are:
 
@@ -238,7 +238,7 @@ The currently used parameters for config are:
 
 #### Usage
 
-`kinsesis_client << json_message`
+`kinesis_client << json_message`
 
 Will encode the `json_message` using the configured avro and write to the configured kinesis stream
 
