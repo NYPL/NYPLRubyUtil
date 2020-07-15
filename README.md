@@ -135,7 +135,23 @@ In the spirit of agnosticism, the client will not intentionally raise an error w
 
 `NYPLRubyUtil::PlatformApiClient`
 
-(description to come)
+#### Configuration
+
+Required environment variables:
+
+`NYPL_OAUTH_ID`, encrypted
+`NYPL_OAUTH_SECRET`, encrypted
+`NYPL_OAUTH_URL`
+`PLATFORM_API_BASE_URL`
+
+Also requires `$logger` to be set
+
+#### Requests
+
+Only get requests are supported currently. Example:
+
+
+#### Responses
 
 ### Avro Encoding and Decoding
 
@@ -148,6 +164,10 @@ In the spirit of agnosticism, the client will not intentionally raise an error w
 `NYPLRubyUtil::KmsClient`
 
 (description to come)
+
+### Kinesis Writes
+
+`NYPLRubyUtil::KinesisClient`
 
 ## Contributing
 

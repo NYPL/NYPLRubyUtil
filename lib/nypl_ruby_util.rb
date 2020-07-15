@@ -5,6 +5,7 @@ require_relative 'platform_api_client'
 require_relative 'directory'
 require_relative 'nypl_avro'
 require_relative 'errors'
+require_relative 'kinesis_client'
 
 class NYPLRubyUtil
   class SierraApiClient < SierraApiClient
@@ -20,5 +21,8 @@ class NYPLRubyUtil
   end
 
   class PlatformApiClient < PlatformApiClient
+  end
+
+  class KinesisClient < KinesisClient
   end
 end
