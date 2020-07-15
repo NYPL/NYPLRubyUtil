@@ -1,5 +1,5 @@
 require 'securerandom'
-require 'aws-sdk'
+require 'aws-sdk-kms'
 require_relative 'nypl_avro'
 # Model representing the result message posted to Kinesis stream about everything that has gone on here -- good, bad, or otherwise.
 

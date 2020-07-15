@@ -4,8 +4,9 @@ require 'base64'
 class KmsClient
   @@kms = nil
 
-  def initialize
-    @kms = self.class.aws_kms_client
+  def initialize(options = {})
+    options ||= {}
+    @kms = self.class.aws_kms_client(options)
   end
 
   def decrypt(cipher)
@@ -15,8 +16,12 @@ class KmsClient
     decrypted[:plaintext]
   end
 
-  def self.aws_kms_client
-    @@kms = Aws::KMS::Client.new(region: 'us-east-1', stub_responses: ENV['APP_ENV'] == 'test') if @@kms.nil?
+  def self.aws_kms_client(options)
+    params = {
+      region: 'us-east-1',
+      stub_responses: ENV['APP_ENV'] == 'test'
+    }.merge(options)
+    @@kms = Aws::KMS::Client.new(params) if @@kms.nil?
     @@kms
   end
 end

@@ -146,18 +146,62 @@ Required environment variables:
 
 Also requires `$logger` to be set
 
+Allows `kms_options` to be set to a hash, which will pass that hash on to the client's
+internal decryption object. For example:
+
+```
+plat = NYPLRubyUtil::PlatformApiClient.new(kms_options: { profile: 'nypl-digital-dev' })
+```
+
+will initialize a client that can use `nypl-digital-dev` creds
+
+Allows `errors` to be set to a hash of numbers pointing to procs. In case the client receives a response from Platform with one of these error codes, it will call the corresponding proc with arguments (response, path). The only error handling set by default is to retry once in case of a 401.
+
+Example:
+
+```plat =  NYPLRubyUtil::PlatformApiClient.new(errors: { 500 => lambda do |resp, path| puts 500, resp, path })
+```
+
 #### Requests
 
 Only get requests are supported currently. Example:
 
+```
+plat.get('bibs')
+```
 
-#### Responses
+Returns a hash representing a the body of the response parsed from json, if the response code is < 400. Otherwise raises an exception
+
 
 ### Avro Encoding and Decoding
 
 `NYPLRubyUtil::NYPLAvro`
 
-(description to come)
+#### Configuration
+Initialize the client by name of avro, e.g.,
+
+```
+avro_client = NYPLRubyUtil::NYPLAvro.by_name('HoldRequestResult')
+```
+
+#### Usage
+
+To encode, pass the hash to the avro_client, e.g.:
+
+```
+test_message =  { jobId: "123", success: true, Error: { message: "Test message", type: "debug" }, holdRequestId:12345 }
+encoded = avro_client.encode(test_message)
+```
+
+to decode, pass the encoded string to the avro_client, e.g.:
+
+```
+decoded = avro_client.decode(encoded)
+```
+
+Both `encode` and `decode` have an optional variable `base64`.
+
+`base64` is a boolean that defaults to true, and determines whether to base64 encode/decode the input/output
 
 ### KMS Encryption and Decryption
 

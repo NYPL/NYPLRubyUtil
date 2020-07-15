@@ -16,8 +16,8 @@ class NYPLAvro
     @reader = Avro::IO::DatumReader.new(@schema)
   end
 
-  def decode(encoded_data_string)
-    avro_string = Base64.decode64(encoded_data_string)
+  def decode(encoded_data_string, base64 = true)
+    avro_string = base64 ? Base64.decode64(encoded_data_string) : encoded_data_string
     stringreader = StringIO.new(avro_string)
     bin_decoder = Avro::IO::BinaryDecoder.new(stringreader)
     begin
@@ -29,11 +29,14 @@ class NYPLAvro
     read_value
   end
 
-  def encode(decoded_data)
+  def encode(decoded_data, base64 = true)
     bin_encoder = Avro::IO::DatumWriter.new(@schema)
     buffer = StringIO.new
     encoder = Avro::IO::BinaryEncoder.new(buffer)
-    bin_encoder.write(datum, encoder)
+    bin_encoder.write(decoded_data, encoder)
+    buffer.rewind
+    result = buffer.read
+    base64 ? Base64.encode64(result) : result
   end
 
   def self.by_name (name)
