@@ -207,11 +207,44 @@ Both `encode` and `decode` have an optional variable `base64`.
 
 `NYPLRubyUtil::KmsClient`
 
-(description to come)
+A thin wrapper around `aws-sdk-kms`
+
+#### Initializing
+
+`kmsclient = NYPLRubyUtil::KmsClient.new(options)`
+
+Will set `us-east-1` as the region by default. A useful option to pass locally is `{ profile: 'nypl-digital-dev' }`. Accepts any options that `AWS::KMS::Client` will accept.
+
+#### Decrypting:
+
+`kmsclient.decrypt(encoded_string)`
+
+Assumes the encoded string is base64 encoded
+
 
 ### Kinesis Writes
 
 `NYPLRubyUtil::KinesisClient`
+
+#### Initializing
+
+`kinsesis_client = NYPLRubyUtil::KinesisClient.new(config)`
+
+The currently used parameters for config are:
+
+`schema_string` The name of the avro for encoding the data. Will use the NYPL Avro client described above
+
+`stream_name` The name of the Kinesis stream
+
+#### Usage
+
+`kinsesis_client << json_message`
+
+Will encode the `json_message` using the configured avro and write to the configured kinesis stream
+
+## Running Tests
+Step 1: Write the Tests
+Step 2: Run them
 
 ## Contributing
 
