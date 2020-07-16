@@ -244,6 +244,7 @@ Will encode the `json_message` using the configured avro and write to the config
 
 ## Running Tests
 Step 1: Write the Tests
+
 Step 2: Run them
 
 ## Contributing
