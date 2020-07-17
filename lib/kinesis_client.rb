@@ -1,5 +1,5 @@
 require 'securerandom'
-require 'aws-sdk-kms'
+require 'aws-sdk-kinesis'
 require_relative 'nypl_avro'
 require_relative 'errors'
 # Model representing the result message posted to Kinesis stream about everything that has gone on here -- good, bad, or otherwise.
@@ -9,10 +9,11 @@ class KinesisClient
 
   def initialize(config)
     @config = config
-    @avro = NYPLAvro.new(config[:schema_string])
+    @avro = NYPLAvro.by_name(config[:schema_string])
   end
 
   def <<(json_message)
+    p '<< ', config[:schema_string], avro
     if config[:schema_string]
       message = avro.encode(json_message)
     else

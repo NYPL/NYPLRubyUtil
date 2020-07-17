@@ -12,6 +12,9 @@ GEM
       aws-partitions (~> 1, >= 1.239.0)
       aws-sigv4 (~> 1.1)
       jmespath (~> 1.0)
+    aws-sdk-kinesis (1.26.0)
+      aws-sdk-core (~> 3, >= 3.99.0)
+      aws-sigv4 (~> 1.1)
     aws-sdk-kms (1.36.0)
       aws-sdk-core (~> 3, >= 3.99.0)
       aws-sigv4 (~> 1.1)
@@ -50,6 +53,7 @@ PLATFORMS
 
 DEPENDENCIES
   avro
+  aws-sdk-kinesis
   aws-sdk-kms
   nypl_log_formatter (~> 0.1.2)
   nypl_sierra_api_client
