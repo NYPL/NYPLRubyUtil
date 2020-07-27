@@ -38,6 +38,7 @@ class NYPLAvro
       bin_encoder.write(decoded_data, encoder)
     rescue Avro::IO::AVroTypeError => e
       raise AvroError.new(e), "Error encoding data using #{@schema.name} schema"
+    end
 
     buffer.rewind
     result = buffer.read
