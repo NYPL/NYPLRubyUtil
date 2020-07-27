@@ -54,6 +54,11 @@ describe KinesisClient do
       expect(kinesis_client.instance_variable_get(:@avro)).to eq(mock_avro)
     end
 
+    it "should set avro to nil if no schema_string provided" do
+      kinesis_client = KinesisClient.new({})
+      expect(kinesis_client.instance_variable_get(:@avro)).to eq(nil)
+    end
+
   end
 
   describe "writing a message" do
