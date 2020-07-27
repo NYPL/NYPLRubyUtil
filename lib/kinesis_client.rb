@@ -9,7 +9,12 @@ class KinesisClient
 
   def initialize(config)
     @config = config
-    @avro = NYPLAvro.by_name(config[:schema_string])
+    @avro = nil
+
+    if config[:schema_string]
+      @avro = NYPLAvro.by_name(config[:schema_string])
+    end
+
   end
 
   def <<(json_message)
