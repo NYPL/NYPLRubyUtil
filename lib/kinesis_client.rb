@@ -26,7 +26,7 @@ class KinesisClient
     end
 
     client = Aws::Kinesis::Client.new
-    partition_key = (config[:partition_key] ? json_message[config[:partition_key]] : SecureRandom.hex(20)).hash
+    partition_key = (config[:partition_key] ? json_message[config[:partition_key]] : SecureRandom.hex(20)).hash.to_s
 
     resp = client.put_record({
       stream_name: config[:stream_name],

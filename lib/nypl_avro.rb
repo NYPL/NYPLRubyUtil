@@ -33,7 +33,13 @@ class NYPLAvro
     bin_encoder = Avro::IO::DatumWriter.new(@schema)
     buffer = StringIO.new
     encoder = Avro::IO::BinaryEncoder.new(buffer)
-    bin_encoder.write(decoded_data, encoder)
+
+    begin
+      bin_encoder.write(decoded_data, encoder)
+    rescue Avro::IO::AvroTypeError => e
+      raise AvroError.new(e), "Error encoding data using #{@schema.name} schema due to #{e.message}"
+    end
+
     buffer.rewind
     result = buffer.read
     base64 ? Base64.encode64(result) : result
