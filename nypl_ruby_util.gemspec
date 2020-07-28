@@ -4,15 +4,15 @@ Gem::Specification.new do |s|
   s.date = "2020-07-13"
   s.description = "A repository of common utilities for NYPL Ruby application"
   s.summary = "A repository of common utilities for NYPL Ruby application"
-  s.add_runtume_dependency "avro",
+  s.add_runtime_dependency "avro",
     ["= 1.10.0"]
-  s.add_runtume_dependency "aws-sdk-kinesis",
+  s.add_runtime_dependency "aws-sdk-kinesis",
     ["= 1.26.0"]
-  s.add_runtume_dependency "aws-sdk-kms",
+  s.add_runtime_dependency "aws-sdk-kms",
     ["= 1.36.0"]
-  s.add_runtume_dependency "nypl_log_formatter",
+  s.add_runtime_dependency "nypl_log_formatter",
     ["= 0.1.3"]
-  s.add_runtume_dependency "nypl_sierra_api_client",
+  s.add_runtime_dependency "nypl_sierra_api_client",
     ["= 1.0.3"]
   s.author = ["Daniel Appel"]
   s.files = ["lib/nypl_ruby_util.rb",
