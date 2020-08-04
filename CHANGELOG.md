@@ -1,8 +1,9 @@
 # Changelog
 
 ## v0.0.3
-
-Remove base64 encoding on write in the KinesisClient.
+### Fixed
+- Remove base64 encoding on write in the KinesisClient.
+- Add UTF-8 encoding for StringIO object in NYPLAvro.
 
 ## v0.0.0
 
