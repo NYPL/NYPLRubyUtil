@@ -32,6 +32,7 @@ class NYPLAvro
   def encode(decoded_data, base64 = true)
     bin_encoder = Avro::IO::DatumWriter.new(@schema)
     buffer = StringIO.new
+    buffer.set_encoding('UTF-8')
     encoder = Avro::IO::BinaryEncoder.new(buffer)
 
     begin

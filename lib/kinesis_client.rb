@@ -18,9 +18,8 @@ class KinesisClient
   end
 
   def <<(json_message)
-    p '<< ', config[:schema_string], avro
     if config[:schema_string]
-      message = avro.encode(json_message)
+      message = avro.encode(json_message, false)
     else
       message = json_message
     end
