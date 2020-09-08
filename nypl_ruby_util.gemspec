@@ -10,8 +10,8 @@ Gem::Specification.new do |s|
     ["= 1.26.0"]
   s.add_runtime_dependency "aws-sdk-kms",
     ["= 1.36.0"]
-  s.add_runtime_dependency "aws-sdk-lambda",
-  s.add_runtime_dependency "aws-sdk-cloudwatchevents",
+  s.add_runtime_dependency "aws-sdk-lambda"
+  s.add_runtime_dependency "aws-sdk-cloudwatchevents"
   s.add_runtime_dependency "nypl_log_formatter",
     ["= 0.1.3"]
   s.add_runtime_dependency "nypl_sierra_api_client",
