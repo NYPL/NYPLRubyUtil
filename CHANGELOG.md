@@ -1,5 +1,9 @@
 # Changelog
 
+## v0.0.4
+#### Added deploy_helper
+- Add deploy_helper
+
 ## v0.0.3
 ### Fixed
 - Remove base64 encoding on write in the KinesisClient.
