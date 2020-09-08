@@ -300,12 +300,19 @@ Add configuration using the following format:
     bisect_batch_on_function_error: ...
     maximum_retry_attempts: ...
     starting_position: ...
-  access_key_id: "$AWS_ACCESS_KEY_ID_PRODUCTION"
-  secret_access_key: "$AWS_SECRET_ACCESS_KEY_PRODUCTION"
+  access_key_id: [e.g. "$AWS_ACCESS_KEY_ID_PRODUCTION"]
+  secret_access_key: [e.g. "$AWS_SECRET_ACCESS_KEY_PRODUCTION"]
   on:
     branch: env
 
 ```
+
+NB: There are two different kinds of events that are supported.
+1. Cron jobs. You can just put the schedule expression directly in travis and travis will create the cron job.
+2. Kinesis events. You have to have an arn for an existing kinesis event for this one, and travis will connect the lambda
+to the right stream
+
+Also note that this utility is only set up currently to support one event source at a time, and will delete existing event sources if there are others.
 
 ## Running Tests
 Step 1: Write the Tests
