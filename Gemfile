@@ -5,6 +5,8 @@ gem 'nypl_sierra_api_client'
 gem 'avro'
 gem 'aws-sdk-kinesis'
 gem 'aws-sdk-kms'
+gem 'aws-sdk-lambda'
+gem 'aws-sdk-cloudwatchevents'
 
 group :development, :test do
   gem 'rspec'

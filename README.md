@@ -242,6 +242,71 @@ The currently used parameters for config are:
 
 Will encode the `json_message` using the configured avro and write to the configured kinesis stream
 
+### Deploying In CI/CD
+
+`NYPLRubyUtil` contains a class `DeployHelper` to help with some missing functionality in travis. This can be used to make sure vpc configuration, environment variables, event triggers, and layers are properly deployed as part of CI/CD.
+
+#### Usage
+
+In your `rakefile`, require the `NYPLRubyUtil` gem.
+Add the following:
+
+```
+desc 'Update lambda layers, environment_variables, vpc, and events'
+task :set_config do
+    deploy_helper = NYPLRubyUtil::DeployHelper.new
+    deploy_helper.update_lambda_configuration
+    deploy_helper.update_event
+end
+```
+
+Then in travis:
+
+```
+after_deploy:
+- rake set_config
+```
+
+Add configuration using the following format:
+
+```
+
+- provider: lambda
+  function_name: Name-env
+  layers:
+  - Layer1
+  - Layer2
+  ...
+  vpc_config:
+    subnet_ids:
+    - subnet1
+    - subnet2
+    - ...
+    security_group_ids:
+    - id1
+    ...
+  environment:
+    variables:
+      VAR_1: value1
+      VAR2: value2
+      ...
+  event:
+    schedule_expression: rate(24 hours)
+    OR
+    event:
+    event_source_arn: arn
+    batch_size: ...
+    maximum_record_age_in_seconds: ...
+    bisect_batch_on_function_error: ...
+    maximum_retry_attempts: ...
+    starting_position: ...
+  access_key_id: "$AWS_ACCESS_KEY_ID_PRODUCTION"
+  secret_access_key: "$AWS_SECRET_ACCESS_KEY_PRODUCTION"
+  on:
+    branch: env
+
+```
+
 ## Running Tests
 Step 1: Write the Tests
 
