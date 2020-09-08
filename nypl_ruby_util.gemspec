@@ -1,7 +1,7 @@
 Gem::Specification.new do |s|
   s.name = "nypl_ruby_util"
-  s.version = "0.0.3"
-  s.date = "2020-07-13"
+  s.version = "0.0.4"
+  s.date = "2020-09-08"
   s.description = "A repository of common utilities for NYPL Ruby application"
   s.summary = "A repository of common utilities for NYPL Ruby application"
   s.add_runtime_dependency "avro",
@@ -10,6 +10,8 @@ Gem::Specification.new do |s|
     ["= 1.26.0"]
   s.add_runtime_dependency "aws-sdk-kms",
     ["= 1.36.0"]
+  s.add_runtime_dependency "aws-sdk-lambda",
+  s.add_runtime_dependency "aws-sdk-cloudwatchevents",
   s.add_runtime_dependency "nypl_log_formatter",
     ["= 0.1.3"]
   s.add_runtime_dependency "nypl_sierra_api_client",
@@ -21,7 +23,8 @@ Gem::Specification.new do |s|
     "lib/kinesis_client.rb",
     "lib/kms_client.rb",
     "lib/nypl_avro.rb",
-    "lib/platform_api_client.rb"
+    "lib/platform_api_client.rb",
+    "lib/deploy_helper.rb"
   ]
   s.license = "MIT"
 end

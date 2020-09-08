@@ -6,6 +6,7 @@ require_relative 'directory'
 require_relative 'nypl_avro'
 require_relative 'errors'
 require_relative 'kinesis_client'
+require_relative 'deploy_helper'
 
 class NYPLRubyUtil
   class SierraApiClient < SierraApiClient
@@ -24,5 +25,8 @@ class NYPLRubyUtil
   end
 
   class KinesisClient < KinesisClient
+  end
+
+  class DeployHelper < DeployHelper
   end
 end
