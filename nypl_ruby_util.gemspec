@@ -1,6 +1,6 @@
 Gem::Specification.new do |s|
   s.name = "nypl_ruby_util"
-  s.version = "0.0.4"
+  s.version = "0.0.5"
   s.date = "2020-09-08"
   s.description = "A repository of common utilities for NYPL Ruby application"
   s.summary = "A repository of common utilities for NYPL Ruby application"
@@ -26,5 +26,6 @@ Gem::Specification.new do |s|
     "lib/platform_api_client.rb",
     "lib/deploy_helper.rb"
   ]
+  s.homepage = "https://github.com/NYPL/NYPLRubyUtil"
   s.license = "MIT"
 end

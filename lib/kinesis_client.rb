@@ -38,7 +38,7 @@ class KinesisClient
       if resp.successful?
         return_hash["code"] = "200"
         return_hash["message"] = json_message, resp
-        $logger.info("Message sent to HoldRequestResult #{json_message}, #{resp}") if $logger
+        $logger.info("Message sent to #{config[:stream_name]} #{json_message}, #{resp}") if $logger
       else
         $logger.error("message" => "FAILED to send message to HoldRequestResult #{json_message}, #{resp}.") if $logger
         raise NYPLError.new json_message, resp
