@@ -1,7 +1,10 @@
 # Changelog
 
+## v0.0.5
+Minor cosmetic fixes
+
 ## v0.0.4
-#### Added deploy_helper
+### Added deploy_helper
 - Add deploy_helper
 
 ## v0.0.3

@@ -5,7 +5,7 @@ This gem contains several utility classes for common tasks in Ruby applications 
 
 ## Version
 
-`0.0.3`
+`0.0.5`
 
 ## Installation
 
@@ -315,9 +315,10 @@ to the right stream
 Also note that this utility is only set up currently to support one event source at a time, and will delete existing event sources if there are others.
 
 ## Running Tests
-Step 1: Write the Tests
 
-Step 2: Run them
+```
+bundle exec rspec -fd
+```
 
 ## Contributing
 
