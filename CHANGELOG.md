@@ -1,5 +1,8 @@
 # Changelog
 
+## v0.0.6
+Fix bug setting token in platform_api_client
+
 ## v0.0.5
 Minor cosmetic fixes
 
