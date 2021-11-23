@@ -140,8 +140,11 @@ In the spirit of agnosticism, the client will not intentionally raise an error w
 Required environment variables:
 
 `NYPL_OAUTH_ID`, encrypted
+
 `NYPL_OAUTH_SECRET`, encrypted
+
 `NYPL_OAUTH_URL`
+
 `PLATFORM_API_BASE_URL`
 
 Also requires `$logger` to be set
