@@ -61,6 +61,7 @@ class PlatformApiClient
 
   # Authorizes the request.
   def authenticate!
+    $logger.debug('authenticating')
     # NOOP if we've already authenticated
     return nil if ! access_token.nil?
 
@@ -81,8 +82,10 @@ class PlatformApiClient
     end
 
     if response.code == '200'
-      access_token = JSON.parse(response.body)["access_token"]
+      self.access_token = JSON.parse(response.body)["access_token"]
+      $logger.debug('got token')
     else
+      $logger.debug('no token')
       nil
     end
   end
