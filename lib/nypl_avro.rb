@@ -38,7 +38,7 @@ class NYPLAvro
     begin
       bin_encoder.write(decoded_data, encoder)
     rescue Avro::IO::AvroTypeError => e
-      raise AvroError.new(e), "Error encoding data using #{@schema.name} schema due to #{e.message}"
+      raise AvroError.new(e), "Error encoding data #{decoded_data} using #{@schema.name} schema due to #{e.message}"
     end
 
     buffer.rewind
