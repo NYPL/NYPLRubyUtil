@@ -239,11 +239,28 @@ The currently used parameters for config are:
 
 `stream_name` The name of the Kinesis stream
 
+`profile` For local use
+
+
+
+KinesisClient can also be configured to push events in batches:
+
+`kinesis_client = NYPLRubyUtil::KinesisClient.new(config, batch_size, automatically_push)`
+
+In this case, the client will wait to push records until at least `batch_size` have been entered. If `automatically_push` is set to false, it will not push the batches until it receives `push_records`
+
+
 #### Usage
 
 `kinesis_client << json_message`
 
 Will encode the `json_message` using the configured avro and write to the configured kinesis stream
+
+If `batch_size` is set, will only write to the kinesis stream when it receives at least `batch_size` many records.
+
+If `automatically_push` is set to false, it will not push records to kinesis until it receives `push_records`
+
+Call `push_records` when all records have been entered to push any remaining records to kinesis
 
 ### Deploying In CI/CD
 

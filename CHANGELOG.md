@@ -1,5 +1,8 @@
 # Changelog
 
+## v0.0.7
+Add batching of records in KinesisClient
+
 ## v0.0.6
 Fix bug setting token in platform_api_client
 
