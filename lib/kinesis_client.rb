@@ -7,13 +7,13 @@ require_relative 'errors'
 class KinesisClient
   attr_reader :config, :avro
 
-  def initialize(config, batch_size = 1, automatically_push = true)
+  def initialize(config)
     @config = config
     @stream_name = @config[:stream_name]
     @avro = nil
-    @batch_size = batch_size
+    @batch_size = @config[:batch_size] || 1
     @batch = []
-    @automatically_push = automatically_push
+    @automatically_push = @config[:automatically_push] == false ? false : true
     @client_options = config[:profile] ? { profile: config[:profile] } : {}
     @client = Aws::Kinesis::Client.new @client_options
 
@@ -21,7 +21,7 @@ class KinesisClient
       @avro = NYPLAvro.by_name(config[:schema_string])
     end
 
-    @shovel_method = batch_size > 1 ? :push_to_batch : :push_record
+    @shovel_method = @batch_size > 1 ? :push_to_batch : :push_record
 
   end
 

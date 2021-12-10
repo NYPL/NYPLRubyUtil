@@ -74,8 +74,9 @@ describe KinesisClient do
       allow(@mock_avro).to receive(:encode) {|x| "encoded #{x}"}
       @kinesis_client = KinesisClient.new({
           schema_string: 'really_fake_schema',
-          stream_name: 'fake-stream'
-      }, 3)
+          stream_name: 'fake-stream',
+          batch_size: 3
+      })
       @mock_random = double()
       allow(SecureRandom).to receive(:hex).and_return(@mock_random)
       allow(@mock_random).to receive(:hash).and_return("hashed")
