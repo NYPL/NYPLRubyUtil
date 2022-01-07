@@ -50,7 +50,7 @@ class NYPLAvro
     require 'net/http'
     require 'uri'
 
-    uri = URI.parse("#{ENV["PLATFORM_API_BASE_URL"]}current-schemas/#{name}")
+    uri = URI.parse("https://qa-platform.nypl.org/api/v0.1/current-schemas/#{name}")
     begin
       response = Net::HTTP.get_response(uri)
     rescue Exception => e
