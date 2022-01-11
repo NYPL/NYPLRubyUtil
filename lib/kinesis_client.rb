@@ -53,7 +53,7 @@ class KinesisClient
       return_hash["message"] = json_message, resp
       $logger.info("Message sent to #{config[:stream_name]} #{json_message}, #{resp}") if $logger
     else
-      $logger.error("message" => "FAILED to send message to HoldRequestResult #{json_message}, #{resp}.") if $logger
+      $logger.error("message" => "FAILED to send message to #{@stream_name} #{json_message}, #{resp}.") if $logger
       raise(NYPLError.new(json_message, resp))
     end
     return_hash
@@ -78,6 +78,7 @@ class KinesisClient
 
     return_message = {
       failures: resp.failed_record_count,
+      failures_data: filter_failures,
       error_messages: resp.records.map { |record| record.error_message }.compact
     }
 
@@ -90,21 +91,22 @@ class KinesisClient
   end
 
   def push_records
-    if @records.length > 0 && @records.length < @batch_size
-      push_batch(@records)
-    else
-      @records.each_slice(@batch_size) { |slice| push_batch(slice) }
+    if @records.length > 0
+      if @records.length < @batch_size
+        push_batch(@records)
+      else
+        @records.each_slice(@batch_size) { |slice| push_batch(slice) }
+      end
     end
     @records = []
   end
 
-  # where should I put this?
-  def resend_failures(resp)
-    failed_records_indices = []
+  def filter_failures(resp)
+    failed_records = []
     resp.records.each_with_index do |record, i|
-      failed_records_indices << i if record.error_message.length > 0
+      decoded_record = avro.decode(@records[i])
+      failed_records << decoded_record if record.error_message.length > 0
     end
-    @records = @records.select_with_index { |_record, i| failed_records_indices.include?(i) }
-    push_records
+    failed_records
   end
 end
