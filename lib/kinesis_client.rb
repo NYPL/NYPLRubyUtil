@@ -12,7 +12,7 @@ class KinesisClient
     @stream_name = @config[:stream_name]
     @avro = nil
     @batch_size = @config[:batch_size] || 1
-    @batch = []
+    @records = []
     @automatically_push = !(@config[:automatically_push] == false)
     @client_options = config[:profile] ? { profile: config[:profile] } : {}
     @client = Aws::Kinesis::Client.new(@client_options)
@@ -53,7 +53,7 @@ class KinesisClient
       return_hash["message"] = json_message, resp
       $logger.info("Message sent to #{config[:stream_name]} #{json_message}, #{resp}") if $logger
     else
-      $logger.error("message" => "FAILED to send message to HoldRequestResult #{json_message}, #{resp}.") if $logger
+      $logger.error("message" => "FAILED to send message to #{@stream_name} #{json_message}, #{resp}.") if $logger
       raise(NYPLError.new(json_message, resp))
     end
     return_hash
@@ -61,11 +61,11 @@ class KinesisClient
 
   def push_to_batch(json_message)
     begin
-      @batch << convert_to_record(json_message)
+      @records << convert_to_record(json_message)
     rescue AvroError => e
       $logger.error("message" => "Avro encoding error #{e.message} for #{json_message}")
     end
-    push_records if @automatically_push && @batch.length >= @batch_size
+    push_records if @automatically_push && @records.length >= @batch_size
   end
 
   def push_batch(batch)
@@ -78,6 +78,7 @@ class KinesisClient
 
     return_message = {
       failures: resp.failed_record_count,
+      failures_data: filter_failures,
       error_messages: resp.records.map { |record| record.error_message }.compact
     }
 
@@ -90,7 +91,22 @@ class KinesisClient
   end
 
   def push_records
-    @batch.each_slice(@batch_size) { |slice| push_batch(slice) }
-    @batch = []
+    if @records.length > 0
+      if @records.length < @batch_size
+        push_batch(@records)
+      else
+        @records.each_slice(@batch_size) { |slice| push_batch(slice) }
+      end
+    end
+    @records = []
+  end
+
+  def filter_failures(resp)
+    failed_records = []
+    resp.records.each_with_index do |record, i|
+      decoded_record = avro.decode(@records[i])
+      failed_records << decoded_record if record.error_message.length > 0
+    end
+    failed_records
   end
 end
