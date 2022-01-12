@@ -141,6 +141,46 @@ describe KinesisClient do
       @kinesis_client << '3'
     end
 
+    it 'should push remaining records to Kinesis' do
+      allow(@mock_client).to receive(:put_records).with({
+        records: [
+          {
+            data: "encoded 1",
+            partition_key: "hashed"
+          },
+          {
+            data: "encoded 2",
+            partition_key: "hashed"
+          },
+        ],
+        stream_name: 'fake-stream'
+      }).and_return({
+        failed_record_count: 0,
+        records: []
+      }).and_return(@mock_resp)
+      expect(@mock_client).to receive(:put_records).with({
+        records: [
+          {
+            data: "encoded 1",
+            partition_key: "hashed"
+          },
+          {
+            data: "encoded 2",
+            partition_key: "hashed"
+          },
+        ],
+        stream_name: 'fake-stream'
+      })
+      @kinesis_client << '1'
+      @kinesis_client << '2'
+      @kinesis_client.push_records
+    end
+
+    it 'should not send an empty array to push_batch' do
+      expect(@mock_client).not_to receive(:put_records)
+      @kinesis_client.push_records
+    end
+
     it 'push_records should clear remaining records' do
       expect(@mock_client).to receive(:put_records).with({
         records: [
@@ -162,6 +202,10 @@ describe KinesisClient do
       @kinesis_client << '5'
       @kinesis_client.push_records
     end
+
+    it "should log records that failed to enter the kinesis stream" do
+      
+    end 
   end
 
   describe "writing a message" do

@@ -19,7 +19,7 @@ class KinesisClient
 
     @avro = NYPLAvro.by_name(config[:schema_string]) if config[:schema_string]
 
-    @shovel_method = @batch_size > 1 ? :push_to_batch : :push_record
+    @shovel_method = @batch_size > 1 ? :push_to_records : :push_record
   end
 
   def convert_to_record(json_message)
@@ -59,7 +59,7 @@ class KinesisClient
     return_hash
   end
 
-  def push_to_batch(json_message)
+  def push_to_records(json_message)
     begin
       @records << convert_to_record(json_message)
     rescue AvroError => e
@@ -78,7 +78,7 @@ class KinesisClient
 
     return_message = {
       failures: resp.failed_record_count,
-      failures_data: filter_failures,
+      failures_data: filter_failures(resp),
       error_messages: resp.records.map { |record| record.error_message }.compact
     }
 
@@ -91,13 +91,7 @@ class KinesisClient
   end
 
   def push_records
-    if @records.length > 0
-      if @records.length < @batch_size
-        push_batch(@records)
-      else
-        @records.each_slice(@batch_size) { |slice| push_batch(slice) }
-      end
-    end
+    @records.each_slice(@batch_size) { |slice| push_batch(slice) } if @records.length > 0 
     @records = []
   end
 
