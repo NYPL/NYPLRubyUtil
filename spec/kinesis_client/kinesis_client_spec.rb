@@ -29,6 +29,18 @@ class MockLogger
 end
 
 describe KinesisClient do
+  before(:each) do
+    @mock_client = double()
+    allow(Aws::Kinesis::Client).to receive(:new).and_return @mock_client
+      @mock_avro = double()
+      allow(NYPLAvro).to receive(:by_name).and_return(@mock_avro)
+      allow(@mock_avro).to receive(:encode) {|x| "encoded #{x}"}
+      @kinesis_client = KinesisClient.new({
+          schema_string: 'really_fake_schema',
+          stream_name: 'fake-stream',
+          batch_size: 3
+      })
+  end
 
   describe :config do
 
@@ -67,16 +79,16 @@ describe KinesisClient do
       $logger = double()
       allow($logger).to receive(:debug)
       allow($logger).to receive(:info)
-      @mock_client = double()
-      allow(Aws::Kinesis::Client).to receive(:new).and_return @mock_client
-      @mock_avro = double()
-      allow(NYPLAvro).to receive(:by_name).and_return(@mock_avro)
-      allow(@mock_avro).to receive(:encode) {|x| "encoded #{x}"}
-      @kinesis_client = KinesisClient.new({
-          schema_string: 'really_fake_schema',
-          stream_name: 'fake-stream',
-          batch_size: 3
-      })
+      # @mock_client = double()
+      # allow(Aws::Kinesis::Client).to receive(:new).and_return @mock_client
+      # @mock_avro = double()
+      # allow(NYPLAvro).to receive(:by_name).and_return(@mock_avro)
+      # allow(@mock_avro).to receive(:encode) {|x| "encoded #{x}"}
+      # @kinesis_client = KinesisClient.new({
+      #     schema_string: 'really_fake_schema',
+      #     stream_name: 'fake-stream',
+      #     batch_size: 3
+      # })
       @mock_random = double()
       allow(SecureRandom).to receive(:hex).and_return(@mock_random)
       allow(@mock_random).to receive(:hash).and_return("hashed")
