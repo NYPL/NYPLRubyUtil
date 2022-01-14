@@ -227,13 +227,14 @@ describe KinesisClient do
     end 
   end
 
-  describe "#filter_failures", only:true do 
+  describe "#filter_failures", only:true do
   before(:each) do
     @mock_failed_response = double
     @mock_failed_record = double
-    #flesh out mock_success_record
     @mock_success_record = double
     allow(@mock_failed_record).to receive(:error_message).and_return("error")
+    allow(@mock_failed_record).to receive(:key?).with(:error_message).and_return(true)
+    allow(@mock_success_record).to receive(:key?).with(:error_message).and_return(false)
     allow(@mock_failed_response).to receive(:failed_record_count).and_return(1)
     allow(@mock_failed_response).to receive(:records)
       .and_return([@mock_success_record, @mock_failed_record])

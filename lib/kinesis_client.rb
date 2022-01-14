@@ -98,8 +98,10 @@ class KinesisClient
   def filter_failures(resp)
     failed_records = []
     resp.records.each_with_index do |record, i|
-      decoded_record = avro.decode(@records[i])
-      failed_records << {:record_data=>decoded_record, error_message:record.error_message} if record.respond_to?(:error_message)
+      if record.key?(:error_message)
+        decoded_record = avro.decode(@records[i])
+        failed_records << {:record_data=>decoded_record, error_message:record.error_message} 
+      end
     end
     failed_records
   end
