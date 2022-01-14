@@ -40,6 +40,9 @@ describe KinesisClient do
           stream_name: 'fake-stream',
           batch_size: 3
       })
+      @mock_random = double()
+      allow(SecureRandom).to receive(:hex).and_return(@mock_random)
+      allow(@mock_random).to receive(:hash).and_return("hashed")
   end
 
   describe :config do
@@ -89,9 +92,9 @@ describe KinesisClient do
       #     stream_name: 'fake-stream',
       #     batch_size: 3
       # })
-      @mock_random = double()
-      allow(SecureRandom).to receive(:hex).and_return(@mock_random)
-      allow(@mock_random).to receive(:hash).and_return("hashed")
+      # @mock_random = double()
+      # allow(SecureRandom).to receive(:hex).and_return(@mock_random)
+      # allow(@mock_random).to receive(:hash).and_return("hashed")
       @mock_resp = double()
       allow(@mock_resp).to receive(:failed_record_count).and_return(0)
       allow(@mock_resp).to receive(:records).and_return([])
@@ -219,6 +222,37 @@ describe KinesisClient do
       
     end 
   end
+
+  describe "#filter_failures", only:true do 
+  before(:each) do
+    @mock_failed_response = double
+    @mock_failed_record = double
+    #flesh out mock_success_record
+    @mock_success_record = double
+    allow(@mock_failed_record).to receive(:error_message).and_return("error")
+    allow(@mock_failed_response).to receive(:failed_record_count).and_return(2)
+    allow(@mock_failed_response).to receive(:records)
+      .and_return([@mock_success_record, @mock_failed_record])
+  end
+  it "should return records that failed to enter the kinesis stream" do
+      @kinesis_client << '1'
+      @kinesis_client << '2'
+
+    expect(@kinesis_client.filter_failures(@mock_failed_response)).to eql(["2"])
+  end 
+
+  it "should return an array that can be logged in #push_batch" do
+    @kinesis_client << '1'
+    @kinesis_client << '2'
+    @kinesis_client.push_records
+
+    expect(@kinesis_client).to receive(:push_batch).with(['4','5']).and_return({
+      "code": "200",
+      "message": "{}"
+    })
+  end
+end
+
 
   describe "writing a message" do
     mock_avro = MockAvro.new
