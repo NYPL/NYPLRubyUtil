@@ -79,7 +79,7 @@ class KinesisClient
     return_message = {
       failures: resp.failed_record_count,
       failures_data: filter_failures(resp),
-      error_messages: resp.records.map { |record| record.error_message }.compact
+      # error_messages: resp.records.map { |record| record.error_message }.compact
     }
 
     $logger.info("Message sent to #{config[:stream_name]} #{return_message}") if $logger
@@ -99,7 +99,7 @@ class KinesisClient
     failed_records = []
     resp.records.each_with_index do |record, i|
       decoded_record = avro.decode(@records[i])
-      failed_records << decoded_record if record.error_message.length > 0
+      failed_records << {:record_data=>decoded_record, error_message:record.error_message} if record.respond_to?(:error_message)
     end
     failed_records
   end

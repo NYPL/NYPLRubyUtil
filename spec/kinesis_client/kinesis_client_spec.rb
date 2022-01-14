@@ -35,6 +35,7 @@ describe KinesisClient do
       @mock_avro = double()
       allow(NYPLAvro).to receive(:by_name).and_return(@mock_avro)
       allow(@mock_avro).to receive(:encode) {|x| "encoded #{x}"}
+      allow(@mock_avro).to receive(:decode) {|x| x[:data].delete("encoded ")}
       @kinesis_client = KinesisClient.new({
           schema_string: 'really_fake_schema',
           stream_name: 'fake-stream',
@@ -43,6 +44,9 @@ describe KinesisClient do
       @mock_random = double()
       allow(SecureRandom).to receive(:hex).and_return(@mock_random)
       allow(@mock_random).to receive(:hash).and_return("hashed")
+      $logger = double()
+      allow($logger).to receive(:debug)
+      allow($logger).to receive(:info)
   end
 
   describe :config do
@@ -79,9 +83,9 @@ describe KinesisClient do
   describe 'writing messages in batches' do
 
     before(:each) do
-      $logger = double()
-      allow($logger).to receive(:debug)
-      allow($logger).to receive(:info)
+      # $logger = double()
+      # allow($logger).to receive(:debug)
+      # allow($logger).to receive(:info)
       # @mock_client = double()
       # allow(Aws::Kinesis::Client).to receive(:new).and_return @mock_client
       # @mock_avro = double()
@@ -230,26 +234,41 @@ describe KinesisClient do
     #flesh out mock_success_record
     @mock_success_record = double
     allow(@mock_failed_record).to receive(:error_message).and_return("error")
-    allow(@mock_failed_response).to receive(:failed_record_count).and_return(2)
+    allow(@mock_failed_response).to receive(:failed_record_count).and_return(1)
     allow(@mock_failed_response).to receive(:records)
       .and_return([@mock_success_record, @mock_failed_record])
+
   end
   it "should return records that failed to enter the kinesis stream" do
       @kinesis_client << '1'
       @kinesis_client << '2'
 
-    expect(@kinesis_client.filter_failures(@mock_failed_response)).to eql(["2"])
+    expect(@kinesis_client.filter_failures(@mock_failed_response)).to eql([{record_data:"2",error_message:"error"}])
   end 
 
   it "should return an array that can be logged in #push_batch" do
-    @kinesis_client << '1'
-    @kinesis_client << '2'
-    @kinesis_client.push_records
+  allow(@mock_client).to receive(:put_records).with({
+        records: [
+          {
+            data: "encoded 4",
+            partition_key: "hashed"
+          },
+          {
+            data: "encoded 5",
+            partition_key: "hashed"
+          }
+        ],
+        stream_name: 'fake-stream'
+      }).and_return(@mock_failed_response)
 
-    expect(@kinesis_client).to receive(:push_batch).with(['4','5']).and_return({
+    message = {:failures=>1,:failures_data=>{:record_data=>'5',error_message:"error"}}.to_json
+    expect(@kinesis_client).to receive(:push_batch).with([{:data=>"encoded 4", :partition_key=>"hashed"},{:data=>"encoded 5", :partition_key=>"hashed"}]).and_return({
       "code": "200",
-      "message": "{}"
+      "message": message
     })
+    @kinesis_client << '4'
+    @kinesis_client << '5'
+    @kinesis_client.push_records
   end
 end
 
