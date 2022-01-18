@@ -231,26 +231,24 @@ describe KinesisClient do
     expect(@kinesis_client.filter_failures(@mock_failed_response)).to eql(["2"])
   end 
 
-  it "should return an array that can be logged in #push_batch" do
-  allow(@mock_client).to receive(:put_records).with({
-        records: [
-          {
-            data: "encoded 4",
-            partition_key: "hashed"
-          },
-          {
-            data: "encoded 5",
-            partition_key: "hashed"
-          }
-        ],
-        stream_name: 'fake-stream'
-      }).and_return(@mock_failed_response)
+  it "should trigger a the logger to warn when there are failed records" do
+    allow(@mock_client).to receive(:put_records).with({
+          records: [
+            {
+              data: "encoded 4",
+              partition_key: "hashed"
+            },
+            {
+              data: "encoded 5",
+              partition_key: "hashed"
+            }
+          ],
+          stream_name: 'fake-stream'
+        }).and_return(@mock_failed_response)
+    allow($logger).to receive(:warn).with("")
 
-    message = {:failures=>1,:failures_data=>{:record_data=>'5',error_message:"error"}}.to_json
-    expect(@kinesis_client).to receive(:push_batch).with([{:data=>"encoded 4", :partition_key=>"hashed"},{:data=>"encoded 5", :partition_key=>"hashed"}]).and_return({
-      "code": "200",
-      "message": message
-    })
+    expect($logger).to receive(:warn).with("Message sent to fake-stream {:failures=>1, :failures_data=>[\"5\"]}")
+    
     @kinesis_client << '4'
     @kinesis_client << '5'
     @kinesis_client.push_records

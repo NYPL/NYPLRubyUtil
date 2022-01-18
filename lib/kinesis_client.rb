@@ -76,17 +76,15 @@ class KinesisClient
 
     $logger.debug("Received #{resp} from #{@stream_name}")
 
-    return_message = {
-      failures: resp.failed_record_count,
-      failures_data: filter_failures(resp),
-    }
-
-    $logger.info("Message sent to #{config[:stream_name]} #{return_message}") if $logger
-
-    {
-      "code": "200",
-      "message": return_message.to_json
-    }
+    if resp.failed_record_count > 0 
+      return_message = {
+        failures: resp.failed_record_count,
+        failures_data: filter_failures(resp),
+      } 
+      $logger.warn("Message sent to #{config[:stream_name]} #{return_message}") if $logger
+    else
+      $logger.info("Message sent to #{config[:stream_name]} successfully") if $logger
+    end
   end
 
   def push_records
