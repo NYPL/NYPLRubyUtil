@@ -12,6 +12,7 @@ class KinesisClient
     @stream_name = @config[:stream_name]
     @avro = nil
     @batch_size = @config[:batch_size] || 1
+    @batch_count = 0
     @records = []
     @automatically_push = !(@config[:automatically_push] == false)
     @client_options = config[:profile] ? { profile: config[:profile] } : {}
@@ -79,8 +80,8 @@ class KinesisClient
     if resp.failed_record_count > 0 
       return_message = {
         failures: resp.failed_record_count,
-        failures_data: filter_failures(resp),
-      } 
+        failures_data: filter_failures(resp)
+      }
       $logger.warn("Message sent to #{config[:stream_name]} #{return_message}") if $logger
     else
       $logger.info("Message sent to #{config[:stream_name]} successfully") if $logger
@@ -88,11 +89,19 @@ class KinesisClient
   end
 
   def push_records
-    @records.each_slice(@batch_size) { |slice| push_batch(slice) } if @records.length > 0 
-    @records = []
+    if @records.length > 0 
+      @records.each_slice(@batch_size) do |slice| 
+        push_batch(slice)
+        @batch_count += 1
+      end
+      @records = []
+      @batch_count = 0
+    end
   end
 
   def filter_failures(resp)
-    resp.records.filter_map.with_index {|record, i| avro.decode(@records[i]) if record.key?(:error_message)}
+    resp.records.filter_map.with_index do |record, i| 
+      avro.decode(@records[i + @batch_size * @batch_count]) if record.key?(:error_message)
+    end
   end
 end

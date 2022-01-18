@@ -241,7 +241,6 @@ describe KinesisClient do
           ],
           stream_name: 'fake-stream'
         }).and_return(@mock_failed_response)
-    # allow($logger).to receive(:warn).with("Message sent to fake-stream {:failures=>1, :failures_data=>[\"5\"]}")
 
     expect($logger).to receive(:warn).with("Message sent to fake-stream {:failures=>1, :failures_data=>[\"5\"]}")
     
@@ -249,7 +248,8 @@ describe KinesisClient do
     @kinesis_client << '5'
     @kinesis_client.push_records
   end
-  it "should trigger the longer to indicate success when all records are sent successfully" do
+
+  it "should trigger the logger to indicate success when all records are sent successfully" do
     allow(@mock_client).to receive(:put_records).with({
         records: [
           {
@@ -276,6 +276,59 @@ describe KinesisClient do
       @kinesis_client << '1'
       @kinesis_client << '2'
       @kinesis_client << '3'
+  end
+
+  it "should filter failures from records arrays longer than the batch size" do
+    kinesis_client = KinesisClient.new({
+      schema_string: 'really_fake_schema',
+      stream_name: 'fake-stream',
+      batch_size: 3,
+      automatically_push: false
+    })
+    mock_response = double
+
+    allow(mock_response).to receive(:failed_record_count).and_return(1)
+      allow(@mock_client).to receive(:put_records).with({
+        records: [
+          {
+            data: "encoded 1",
+            partition_key: "hashed"
+          },
+          {
+            data: "encoded 2",
+            partition_key: "hashed"
+          },
+          {
+            data: "encoded 3",
+            partition_key: "hashed"
+          },
+        ],
+        stream_name: 'fake-stream'
+      }).and_return({
+        failed_record_count: 0,
+        records: []
+      }).and_return(@mock_resp)
+    allow(@mock_client).to receive(:put_records).with({
+          records: [
+            {
+              data: "encoded 4",
+              partition_key: "hashed"
+            },
+            {
+              data: "encoded 5",
+              partition_key: "hashed"
+            }
+          ],
+          stream_name: 'fake-stream'
+        }).and_return(@mock_failed_response)
+
+    expect($logger).to receive(:warn).with("Message sent to fake-stream {:failures=>1, :failures_data=>[\"5\"]}")
+    kinesis_client << '1'
+    kinesis_client << '2'
+    kinesis_client << '3'
+    kinesis_client << '4'
+    kinesis_client << '5'
+    kinesis_client.push_records
   end
 end
 
