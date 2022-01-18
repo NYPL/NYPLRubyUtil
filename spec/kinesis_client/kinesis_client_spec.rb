@@ -83,22 +83,6 @@ describe KinesisClient do
   describe 'writing messages in batches' do
 
     before(:each) do
-      # $logger = double()
-      # allow($logger).to receive(:debug)
-      # allow($logger).to receive(:info)
-      # @mock_client = double()
-      # allow(Aws::Kinesis::Client).to receive(:new).and_return @mock_client
-      # @mock_avro = double()
-      # allow(NYPLAvro).to receive(:by_name).and_return(@mock_avro)
-      # allow(@mock_avro).to receive(:encode) {|x| "encoded #{x}"}
-      # @kinesis_client = KinesisClient.new({
-      #     schema_string: 'really_fake_schema',
-      #     stream_name: 'fake-stream',
-      #     batch_size: 3
-      # })
-      # @mock_random = double()
-      # allow(SecureRandom).to receive(:hex).and_return(@mock_random)
-      # allow(@mock_random).to receive(:hash).and_return("hashed")
       @mock_resp = double()
       allow(@mock_resp).to receive(:failed_record_count).and_return(0)
       allow(@mock_resp).to receive(:records).and_return([])
@@ -227,7 +211,7 @@ describe KinesisClient do
     end 
   end
 
-  describe "#filter_failures", only:true do
+  describe "#filter_failures" do
   before(:each) do
     @mock_failed_response = double
     @mock_failed_record = double
@@ -244,7 +228,7 @@ describe KinesisClient do
       @kinesis_client << '1'
       @kinesis_client << '2'
 
-    expect(@kinesis_client.filter_failures(@mock_failed_response)).to eql([{record_data:"2",error_message:"error"}])
+    expect(@kinesis_client.filter_failures(@mock_failed_response)).to eql(["2"])
   end 
 
   it "should return an array that can be logged in #push_batch" do
