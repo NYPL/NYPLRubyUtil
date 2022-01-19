@@ -90,7 +90,7 @@ class KinesisClient
 
   def push_records
     if @records.length > 0 
-      @records.each_slice(@batch_size) do |slice| 
+      @records.each_slice(@batch_size) do |slice|
         push_batch(slice)
         @batch_count += 1
       end
@@ -100,7 +100,7 @@ class KinesisClient
   end
 
   def filter_failures(resp)
-    resp.records.filter_map.with_index do |record, i| 
+    resp.records.filter_map.with_index do |record, i|
       avro.decode(@records[i + @batch_size * @batch_count]) if record.responds_to?(:error_message)
     end
   end
