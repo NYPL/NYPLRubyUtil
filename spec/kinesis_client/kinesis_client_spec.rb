@@ -304,9 +304,6 @@ describe KinesisClient do
           },
         ],
         stream_name: 'fake-stream'
-      }).and_return({
-        failed_record_count: 0,
-        records: []
       }).and_return(@mock_resp)
     allow(@mock_client).to receive(:put_records).with({
           records: [
