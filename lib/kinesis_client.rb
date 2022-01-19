@@ -12,14 +12,15 @@ class KinesisClient
     @stream_name = @config[:stream_name]
     @avro = nil
     @batch_size = @config[:batch_size] || 1
-    @batch = []
+    @batch_count = 0
+    @records = []
     @automatically_push = !(@config[:automatically_push] == false)
     @client_options = config[:profile] ? { profile: config[:profile] } : {}
     @client = Aws::Kinesis::Client.new(@client_options)
 
     @avro = NYPLAvro.by_name(config[:schema_string]) if config[:schema_string]
 
-    @shovel_method = @batch_size > 1 ? :push_to_batch : :push_record
+    @shovel_method = @batch_size > 1 ? :push_to_records : :push_record
   end
 
   def convert_to_record(json_message)
@@ -53,19 +54,19 @@ class KinesisClient
       return_hash["message"] = json_message, resp
       $logger.info("Message sent to #{config[:stream_name]} #{json_message}, #{resp}") if $logger
     else
-      $logger.error("message" => "FAILED to send message to HoldRequestResult #{json_message}, #{resp}.") if $logger
+      $logger.error("message" => "FAILED to send message to #{@stream_name} #{json_message}, #{resp}.") if $logger
       raise(NYPLError.new(json_message, resp))
     end
     return_hash
   end
 
-  def push_to_batch(json_message)
+  def push_to_records(json_message)
     begin
-      @batch << convert_to_record(json_message)
+      @records << convert_to_record(json_message)
     rescue AvroError => e
       $logger.error("message" => "Avro encoding error #{e.message} for #{json_message}")
     end
-    push_records if @automatically_push && @batch.length >= @batch_size
+    push_records if @automatically_push && @records.length >= @batch_size
   end
 
   def push_batch(batch)
@@ -76,21 +77,31 @@ class KinesisClient
 
     $logger.debug("Received #{resp} from #{@stream_name}")
 
-    return_message = {
-      failures: resp.failed_record_count,
-      error_messages: resp.records.map { |record| record.error_message }.compact
-    }
-
-    $logger.info("Message sent to #{config[:stream_name]} #{return_message}") if $logger
-
-    {
-      "code": "200",
-      "message": return_message.to_json
-    }
+    if resp.failed_record_count > 0 
+      return_message = {
+        failures: resp.failed_record_count,
+        failures_data: filter_failures(resp)
+      }
+      $logger.warn("Message sent to #{config[:stream_name]} #{return_message}") if $logger
+    else
+      $logger.info("Message sent to #{config[:stream_name]} successfully") if $logger
+    end
   end
 
   def push_records
-    @batch.each_slice(@batch_size) { |slice| push_batch(slice) }
-    @batch = []
+    if @records.length > 0 
+      @records.each_slice(@batch_size) do |slice|
+        push_batch(slice)
+        @batch_count += 1
+      end
+      @records = []
+      @batch_count = 0
+    end
+  end
+
+  def filter_failures(resp)
+    resp.records.filter_map.with_index do |record, i|
+      avro.decode(@records[i + @batch_size * @batch_count]) if record.responds_to?(:error_message)
+    end
   end
 end
