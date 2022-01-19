@@ -101,7 +101,7 @@ class KinesisClient
 
   def filter_failures(resp)
     resp.records.filter_map.with_index do |record, i| 
-      avro.decode(@records[i + @batch_size * @batch_count]) if record.key?(:error_message)
+      avro.decode(@records[i + @batch_size * @batch_count]) if record.responds_to?(:error_message)
     end
   end
 end
