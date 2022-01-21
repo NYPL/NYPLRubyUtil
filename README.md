@@ -5,7 +5,7 @@ This gem contains several utility classes for common tasks in Ruby applications 
 
 ## Version
 
-`0.0.8`
+`0.0.9`
 
 ## Installation
 
@@ -267,7 +267,7 @@ If `config[:automatically_push]` is set to false, it will not push records to ki
 
 Call `push_records` when all records have been entered to push any remaining records to kinesis
 
-Method `push_record` is currently broken. 
+Method `push_record` is currently broken.
 
 ### Deploying In CI/CD
 
