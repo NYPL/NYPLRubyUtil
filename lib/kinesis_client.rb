@@ -12,14 +12,10 @@ class KinesisClient
     @stream_name = @config[:stream_name]
     @avro = nil
     @batch_size = @config[:batch_size] || 1
-    @batch = []
-    @automatically_push = @config[:automatically_push] == false ? false : true
     @client_options = set_config(config)
-    @client = Aws::Kinesis::Client.new @client_options
     @batch_count = 0
     @records = []
     @automatically_push = !(@config[:automatically_push] == false)
-    @client_options = config[:profile] ? { profile: config[:profile] } : {}
     @client = Aws::Kinesis::Client.new(@client_options)
 
     @avro = NYPLAvro.by_name(config[:schema_string]) if config[:schema_string]
