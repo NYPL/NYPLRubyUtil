@@ -42,24 +42,24 @@ class KinesisClient
   end
 
 #This method is broken
-  # def push_record(json_message)
-  #   record = convert_to_record(json_message)
-  #   record[:stream_name] = @stream_name
+  def push_record(json_message)
+    record = convert_to_record(json_message)
+    record[:stream_name] = @stream_name
 
-  #   @client.put_record(record)
+    @client.put_record(record)
 
-  #   return_hash = {}
+    return_hash = {}
 
-  #   if resp.successful?
-  #     return_hash["code"] = "200"
-  #     return_hash["message"] = json_message, resp
-  #     $logger.info("Message sent to #{config[:stream_name]} #{json_message}, #{resp}") if $logger
-  #   else
-  #     $logger.error("message" => "FAILED to send message to #{@stream_name} #{json_message}, #{resp}.") if $logger
-  #     raise(NYPLError.new(json_message, resp))
-  #   end
-  #   return_hash
-  # end
+    if resp.successful?
+      return_hash["code"] = "200"
+      return_hash["message"] = json_message, resp
+      $logger.info("Message sent to #{config[:stream_name]} #{json_message}, #{resp}") if $logger
+    else
+      $logger.error("message" => "FAILED to send message to #{@stream_name} #{json_message}, #{resp}.") if $logger
+      raise(NYPLError.new(json_message, resp))
+    end
+    return_hash
+  end
 
   def push_to_records(json_message)
     begin
