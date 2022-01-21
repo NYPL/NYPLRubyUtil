@@ -262,6 +262,8 @@ If `config[:automatically_push]` is set to false, it will not push records to ki
 
 Call `push_records` when all records have been entered to push any remaining records to kinesis
 
+Method `push_record` is currently broken. 
+
 ### Deploying In CI/CD
 
 `NYPLRubyUtil` contains a class `DeployHelper` to help with some missing functionality in travis. This can be used to make sure vpc configuration, environment variables, event triggers, and layers are properly deployed as part of CI/CD.
