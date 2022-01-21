@@ -1,5 +1,8 @@
 # Changelog
 
+## v0.0.8
+Add addition custom_aws_config as option in KinesisClient
+
 ## v0.0.7
 Add batching of records in KinesisClient
 

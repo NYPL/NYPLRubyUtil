@@ -14,7 +14,7 @@ class KinesisClient
     @batch_size = @config[:batch_size] || 1
     @batch = []
     @automatically_push = @config[:automatically_push] == false ? false : true
-    @client_options = config[:profile] ? { profile: config[:profile] } : {}
+    @client_options = set_config(config)
     @client = Aws::Kinesis::Client.new @client_options
 
     if config[:schema_string]
@@ -23,6 +23,16 @@ class KinesisClient
 
     @shovel_method = @batch_size > 1 ? :push_to_batch : :push_record
 
+  end
+
+  def set_config(config)
+    if config[:profile]
+      { profile: config[:profile] }
+    elsif config[:custom_aws_config]
+      config[:custom_aws_config]
+    else
+      {}
+    end
   end
 
   def convert_to_record(json_message)

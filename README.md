@@ -5,7 +5,7 @@ This gem contains several utility classes for common tasks in Ruby applications 
 
 ## Version
 
-`0.0.6`
+`0.0.8`
 
 ## Installation
 
@@ -240,6 +240,11 @@ The currently used parameters for config are:
 `stream_name` The name of the Kinesis stream
 
 `profile` For local use
+
+`custom_aws_config` An object passed to the Aws Kinesis Client instead of `profile`, when more specific configuration is necessary, e.g.
+```
+{ region: 'region', access_key_id: 'access_key_id', secret_access_key: 'secret_access_key'}
+```
 
 
 
