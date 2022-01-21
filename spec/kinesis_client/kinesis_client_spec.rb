@@ -29,6 +29,28 @@ class MockLogger
 end
 
 describe KinesisClient do
+  before(:each) do
+    @mock_client = double()
+    allow(Aws::Kinesis::Client).to receive(:new).and_return @mock_client
+      @mock_avro = double()
+      allow(NYPLAvro).to receive(:by_name).and_return(@mock_avro)
+      allow(@mock_avro).to receive(:encode) {|x| "encoded #{x}"}
+      allow(@mock_avro).to receive(:decode) {|x| x[:data].delete("encoded ")}
+      @kinesis_client = KinesisClient.new({
+          schema_string: 'really_fake_schema',
+          stream_name: 'fake-stream',
+          batch_size: 3
+      })
+      @mock_random = double()
+      allow(SecureRandom).to receive(:hex).and_return(@mock_random)
+      allow(@mock_random).to receive(:hash).and_return("hashed")
+      $logger = double()
+      allow($logger).to receive(:debug)
+      allow($logger).to receive(:info)
+      @mock_resp = double()
+      allow(@mock_resp).to receive(:failed_record_count).and_return(0)
+      allow(@mock_resp).to receive(:records).and_return([])
+  end
 
   describe :config do
 
@@ -87,25 +109,6 @@ describe KinesisClient do
   describe 'writing messages in batches' do
 
     before(:each) do
-      $logger = double()
-      allow($logger).to receive(:debug)
-      allow($logger).to receive(:info)
-      @mock_client = double()
-      allow(Aws::Kinesis::Client).to receive(:new).and_return @mock_client
-      @mock_avro = double()
-      allow(NYPLAvro).to receive(:by_name).and_return(@mock_avro)
-      allow(@mock_avro).to receive(:encode) {|x| "encoded #{x}"}
-      @kinesis_client = KinesisClient.new({
-          schema_string: 'really_fake_schema',
-          stream_name: 'fake-stream',
-          batch_size: 3
-      })
-      @mock_random = double()
-      allow(SecureRandom).to receive(:hex).and_return(@mock_random)
-      allow(@mock_random).to receive(:hash).and_return("hashed")
-      @mock_resp = double()
-      allow(@mock_resp).to receive(:failed_record_count).and_return(0)
-      allow(@mock_resp).to receive(:records).and_return([])
       allow(@mock_client).to receive(:put_records).with({
         records: [
           {
@@ -164,6 +167,46 @@ describe KinesisClient do
       @kinesis_client << '3'
     end
 
+    it 'should push remaining records to Kinesis' do
+      allow(@mock_client).to receive(:put_records).with({
+        records: [
+          {
+            data: "encoded 1",
+            partition_key: "hashed"
+          },
+          {
+            data: "encoded 2",
+            partition_key: "hashed"
+          },
+        ],
+        stream_name: 'fake-stream'
+      }).and_return({
+        failed_record_count: 0,
+        records: []
+      }).and_return(@mock_resp)
+      expect(@mock_client).to receive(:put_records).with({
+        records: [
+          {
+            data: "encoded 1",
+            partition_key: "hashed"
+          },
+          {
+            data: "encoded 2",
+            partition_key: "hashed"
+          },
+        ],
+        stream_name: 'fake-stream'
+      })
+      @kinesis_client << '1'
+      @kinesis_client << '2'
+      @kinesis_client.push_records
+    end
+
+    it 'should not send an empty array to push_batch' do
+      expect(@mock_client).not_to receive(:put_records)
+      @kinesis_client.push_records
+    end
+
     it 'push_records should clear remaining records' do
       expect(@mock_client).to receive(:put_records).with({
         records: [
@@ -187,16 +230,131 @@ describe KinesisClient do
     end
   end
 
-  describe "writing a message" do
-    mock_avro = MockAvro.new
-    mock_client = MockClient.new
+  describe "#filter_failures" do
+    before(:each) do
+      @mock_failed_response = double
+      @mock_failed_record = double
+      @mock_success_record = double
+      allow(@mock_failed_record).to receive(:error_message).and_return("error")
+      allow(@mock_failed_record).to receive(:responds_to?).with(:error_message).and_return(true)
+      allow(@mock_success_record).to receive(:responds_to?).with(:error_message).and_return(false)
+      allow(@mock_failed_response).to receive(:failed_record_count).and_return(1)
+      allow(@mock_failed_response).to receive(:records)
+        .and_return([@mock_success_record, @mock_failed_record])
 
-    before do
-      allow(NYPLAvro).to receive(:by_name).and_return(mock_avro)
-      allow(mock_avro).to receive(:encode).and_return('encoded')
-      allow(Aws::Kinesis::Client).to receive(:new).and_return(mock_client)
-      allow(mock_client).to receive(:put_record).and_return(MockSuccessResponse.new)
     end
+    it "should return records that failed to enter the kinesis stream" do
+        @kinesis_client << '1'
+        @kinesis_client << '2'
+
+      expect(@kinesis_client.filter_failures(@mock_failed_response)).to eql(["2"])
+    end 
+
+    it "should trigger the logger to warn when there are failed records" do
+      allow(@mock_client).to receive(:put_records).with({
+            records: [
+              {
+                data: "encoded 4",
+                partition_key: "hashed"
+              },
+              {
+                data: "encoded 5",
+                partition_key: "hashed"
+              }
+            ],
+            stream_name: 'fake-stream'
+          }).and_return(@mock_failed_response)
+
+      expect($logger).to receive(:warn).with("Batch sent to fake-stream with failures: {:failures=>1, :failures_data=>[\"5\"]}")
+      
+      @kinesis_client << '4'
+      @kinesis_client << '5'
+      @kinesis_client.push_records
+    end
+
+    it "should trigger the logger to indicate success when all records are sent successfully" do
+      allow(@mock_client).to receive(:put_records).with({
+          records: [
+            {
+              data: "encoded 1",
+              partition_key: "hashed"
+            },
+            {
+              data: "encoded 2",
+              partition_key: "hashed"
+            },
+            {
+              data: "encoded 3",
+              partition_key: "hashed"
+            },
+          ],
+          stream_name: 'fake-stream'
+        }).and_return({
+          failed_record_count: 0,
+          records: []
+        }).and_return(@mock_resp)
+
+        expect($logger).to receive(:info).with("Batch sent to fake-stream successfully")
+
+        @kinesis_client << '1'
+        @kinesis_client << '2'
+        @kinesis_client << '3'
+    end
+
+    it "should filter failures from records arrays longer than the batch size" do
+      kinesis_client = KinesisClient.new({
+        schema_string: 'really_fake_schema',
+        stream_name: 'fake-stream',
+        batch_size: 3,
+        automatically_push: false
+      })
+      mock_response = double
+
+      allow(mock_response).to receive(:failed_record_count).and_return(1)
+        allow(@mock_client).to receive(:put_records).with({
+          records: [
+            {
+              data: "encoded 1",
+              partition_key: "hashed"
+            },
+            {
+              data: "encoded 2",
+              partition_key: "hashed"
+            },
+            {
+              data: "encoded 3",
+              partition_key: "hashed"
+            },
+          ],
+          stream_name: 'fake-stream'
+        }).and_return(@mock_resp)
+      allow(@mock_client).to receive(:put_records).with({
+            records: [
+              {
+                data: "encoded 4",
+                partition_key: "hashed"
+              },
+              {
+                data: "encoded 5",
+                partition_key: "hashed"
+              }
+            ],
+            stream_name: 'fake-stream'
+          }).and_return(@mock_failed_response)
+
+      expect($logger).to receive(:warn).with("Batch sent to fake-stream with failures: {:failures=>1, :failures_data=>[\"5\"]}")
+      kinesis_client << '1'
+      kinesis_client << '2'
+      kinesis_client << '3'
+      kinesis_client << '4'
+      kinesis_client << '5'
+      kinesis_client.push_records
+    end
+
+  end
+
+
+  describe "#push_record" do
 
     # it "should pass the encoded message if given an avro" do
     #   json_message = { fake: 'fake' }
