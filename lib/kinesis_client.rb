@@ -12,15 +12,25 @@ class KinesisClient
     @stream_name = @config[:stream_name]
     @avro = nil
     @batch_size = @config[:batch_size] || 1
+    @client_options = set_config(config)
     @batch_count = 0
     @records = []
     @automatically_push = !(@config[:automatically_push] == false)
-    @client_options = config[:profile] ? { profile: config[:profile] } : {}
     @client = Aws::Kinesis::Client.new(@client_options)
 
     @avro = NYPLAvro.by_name(config[:schema_string]) if config[:schema_string]
 
     @shovel_method = @batch_size > 1 ? :push_to_records : :push_record
+  end
+
+  def set_config(config)
+    if config[:profile]
+      { profile: config[:profile] }
+    elsif config[:custom_aws_config]
+      config[:custom_aws_config]
+    else
+      {}
+    end
   end
 
   def convert_to_record(json_message)
@@ -76,7 +86,7 @@ class KinesisClient
       stream_name: @stream_name
     })
 
-    if resp.failed_record_count > 0 
+    if resp.failed_record_count > 0
       failure_message = {
         failures: resp.failed_record_count,
         failures_data: filter_failures(resp)
@@ -88,7 +98,7 @@ class KinesisClient
   end
 
   def push_records
-    if @records.length > 0 
+    if @records.length > 0
       @records.each_slice(@batch_size) do |slice|
         push_batch(slice)
         @batch_count += 1

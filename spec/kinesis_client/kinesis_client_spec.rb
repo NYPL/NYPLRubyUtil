@@ -83,6 +83,29 @@ describe KinesisClient do
 
   end
 
+  describe 'initializing with custom config' do
+
+    before do
+      @mock_client = double()
+      allow(Aws::Kinesis::Client).to receive(:new).and_return(@mock_client)
+
+    end
+
+    it 'should pass custom creds to Aws client' do
+      expect(Aws::Kinesis::Client).to receive(:new).with(
+        { region: 'region', access_key_id: 'access_key_id', secret_access_key: 'secret_access_key'}
+      )
+
+      KinesisClient.new(
+        {
+          custom_aws_config: {
+            region: 'region', access_key_id: 'access_key_id', secret_access_key: 'secret_access_key'
+          }
+        }
+      )
+    end
+  end
+
   describe 'writing messages in batches' do
 
     before(:each) do
