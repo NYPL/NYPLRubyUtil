@@ -5,7 +5,7 @@ require_relative "errors"
 # Model representing the result message posted to Kinesis stream about everything that has gone on here -- good, bad, or otherwise.
 
 class KinesisClient
-  attr_reader :config, :avro
+  attr_reader :config, :avro, :failed_records
 
   def initialize(config)
     @config = config
@@ -14,6 +14,7 @@ class KinesisClient
     @batch_size = @config[:batch_size] || 1
     @batch_count = 0
     @records = []
+    @failed_records = []
     @automatically_push = !(@config[:automatically_push] == false)
     @client_options = config[:profile] ? { profile: config[:profile] } : {}
     @client = Aws::Kinesis::Client.new(@client_options)
@@ -42,6 +43,7 @@ class KinesisClient
   end
 
 #This method is broken
+#TO DO: figure out how to determine successful or failed record, successful? is not a method on the object
   def push_record(json_message)
     record = convert_to_record(json_message)
     record[:stream_name] = @stream_name
@@ -76,15 +78,7 @@ class KinesisClient
       stream_name: @stream_name
     })
 
-    if resp.failed_record_count > 0 
-      failure_message = {
-        failures: resp.failed_record_count,
-        failures_data: filter_failures(resp)
-      }
-      $logger.warn("Batch sent to #{config[:stream_name]} with failures: #{failure_message}")
-    else
-      $logger.info("Batch sent to #{config[:stream_name]} successfully")
-    end
+    filter_failures(resp) if resp.failed_record_count > 0
   end
 
   def push_records
@@ -99,8 +93,9 @@ class KinesisClient
   end
 
   def filter_failures(resp)
-    resp.records.filter_map.with_index do |record, i|
+    failed_records = resp.records.filter_map.with_index do |record, i|
       avro.decode(@records[i + @batch_size * @batch_count]) if record.responds_to?(:error_message)
     end
+    @failed_records << failed_records
   end
 end
