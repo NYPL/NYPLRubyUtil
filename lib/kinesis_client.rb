@@ -77,7 +77,7 @@ class KinesisClient
       records: batch.to_a,
       stream_name: @stream_name
     })
-
+    puts resp.failed_record_count
     filter_failures(resp) if resp.failed_record_count > 0
   end
 
@@ -94,8 +94,22 @@ class KinesisClient
 
   def filter_failures(resp)
     failed_records = resp.records.filter_map.with_index do |record, i|
-      avro.decode(@records[i + @batch_size * @batch_count]) if record.responds_to?(:error_message)
+      
+      @records[i + @batch_size * @batch_count] if record.responds_to?(:error_message)
     end
     @failed_records << failed_records
+    puts @failed_records
+  end
+
+  def retry_failed_records
+    unless @failed_records.empty?
+      @records = @failed_records.flatten
+      @failed_records = []
+      push_records
+    end
+  end
+
+  def decode_failed_records
+    @failed_records = @failed_records.flatten.map { |record| avro.decode(record) }
   end
 end

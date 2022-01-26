@@ -50,6 +50,15 @@ describe KinesisClient do
       @mock_resp = double()
       allow(@mock_resp).to receive(:failed_record_count).and_return(0)
       allow(@mock_resp).to receive(:records).and_return([])
+      @mock_failed_response = double
+      @mock_failed_record = double
+      @mock_success_record = double
+      allow(@mock_failed_record).to receive(:error_message).and_return("error")
+      allow(@mock_failed_record).to receive(:responds_to?).with(:error_message).and_return(true)
+      allow(@mock_success_record).to receive(:responds_to?).with(:error_message).and_return(false)
+      allow(@mock_failed_response).to receive(:failed_record_count).and_return(1)
+      allow(@mock_failed_response).to receive(:records)
+        .and_return([@mock_success_record, @mock_failed_record])
   end
 
   describe :config do
@@ -209,35 +218,29 @@ describe KinesisClient do
 
   describe "#filter_failures" do
     before(:each) do
-      @mock_failed_response = double
-      @mock_failed_record = double
-      @mock_success_record = double
-      allow(@mock_failed_record).to receive(:error_message).and_return("error")
-      allow(@mock_failed_record).to receive(:responds_to?).with(:error_message).and_return(true)
-      allow(@mock_success_record).to receive(:responds_to?).with(:error_message).and_return(false)
-      allow(@mock_failed_response).to receive(:failed_record_count).and_return(1)
-      allow(@mock_failed_response).to receive(:records)
-        .and_return([@mock_success_record, @mock_failed_record])
-
     end
-    it "should push records that did not enter the kinesis stream to @failed_records" do
+
+    it "should push encoded records that did not enter the kinesis stream to @failed_records" do
         @kinesis_client << '1'
         @kinesis_client << '2'
         @kinesis_client.filter_failures(@mock_failed_response)
 
-      expect(@kinesis_client.failed_records.flatten).to eql(["2"])
+      expect(@kinesis_client.failed_records.flatten).to eql([{:data=>"encoded 2", :partition_key=>"hashed"}])
     end 
 
-    it "should push failed records into @failed_records when records array is longer than the batch size" do
+    it "should create a nested array @failed_records when there are failures across batches" do
       kinesis_client = KinesisClient.new({
         schema_string: 'really_fake_schema',
         stream_name: 'fake-stream',
         batch_size: 3,
         automatically_push: false
       })
-      mock_response = double
+      another_mock_failed_response = double
+      allow(another_mock_failed_response).to receive(:records)
+        .and_return([@mock_success_record, @mock_success_record, @mock_failed_record])
+      allow(another_mock_failed_response).to receive(:failed_record_count)
+        .and_return(1)
 
-      allow(mock_response).to receive(:failed_record_count).and_return(1)
         allow(@mock_client).to receive(:put_records).with({
           records: [
             {
@@ -254,7 +257,7 @@ describe KinesisClient do
             },
           ],
           stream_name: 'fake-stream'
-        }).and_return(@mock_resp)
+        }).and_return(another_mock_failed_response)
       allow(@mock_client).to receive(:put_records).with({
             records: [
               {
@@ -275,9 +278,57 @@ describe KinesisClient do
       kinesis_client << '4'
       kinesis_client << '5'
       kinesis_client.push_records
-      expect(kinesis_client.failed_records.flatten).to eql(['5'])
+      expect(kinesis_client.failed_records).to eql([[{:data=>"encoded 3", :partition_key=>"hashed"}],[{:data=>"encoded 5", :partition_key=>"hashed"}]])
+    end
+  end
+
+  describe "#retry_failed_records" do
+    it('does not call push_records with an empty @failed_records') do
+      expect(@kinesis_client).to_not receive(:push_records)
+      @kinesis_client.retry_failed_records
     end
 
+    it('clears @failed_records') do
+      # problem here is push records is called twice w different args
+      allow(@mock_client).to receive(:put_records).and_return(@mock_failed_response)
+      expect(@kinesis_client.failed_records).to be_empty
+      @kinesis_client << "4"
+      @kinesis_client << "5"
+      @kinesis_client.push_records
+      @kinesis_client.retry_failed_records
+    end
+
+    it('calls push_records on the records in @failed_records') do
+      allow(@mock_client).to receive(:put_records).with({
+        records: [
+          {
+            data: "encoded 4",
+            partition_key: "hashed"
+          },
+          {
+            data: "encoded 5",
+            partition_key: "hashed"
+          },
+        ],
+        stream_name: 'fake-stream'
+      }).and_return(@mock_failed_response)
+      @kinesis_client << '4'
+      @kinesis_client << '5'
+      @kinesis_client.push_records
+      expect(@kinesis_client).to receive(:push_records)
+      @kinesis_client.retry_failed_records
+    end
+  end
+
+  describe "#decode_failed_records" do
+    it('decodes the records in @failed_records') do
+      allow(@mock_client).to receive(:put_records).and_return(@mock_failed_response)
+      @kinesis_client << '4'
+      @kinesis_client << '5'
+      @kinesis_client.push_records
+      @kinesis_client.decode_failed_records
+      expect(@kinesis_client.failed_records).to eql(['5'])
+    end
   end
 
 
