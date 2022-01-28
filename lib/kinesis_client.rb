@@ -5,7 +5,8 @@ require_relative "errors"
 # Model representing the result message posted to Kinesis stream about everything that has gone on here -- good, bad, or otherwise.
 
 class KinesisClient
-  attr_reader :config, :avro, :failed_records
+  #note custom defined :failed_records method
+  attr_reader :config, :avro
 
   def initialize(config)
     @config = config
@@ -76,7 +77,13 @@ class KinesisClient
       records: batch.to_a,
       stream_name: @stream_name
     })
-    filter_failures(resp, batch) if resp.failed_record_count > 0
+    if resp.failed_record_count > 0
+      failures = filter_failures(resp, batch) 
+      $logger.warn("Batch sent to #{config[:stream_name]} with #{failures.length} failures: #{failures}")
+      failures.each{|failure| @failed_records << failure[:record]}
+    else
+      $logger.info("Batch sent to #{config[:stream_name]} successfully")
+    end
   end
 
   def push_records
@@ -89,8 +96,8 @@ class KinesisClient
   end
 
   def filter_failures(resp, batch)
-    resp.records.each_with_index do |record, i|
-      @failed_records << batch[i] if record.responds_to?(:error_message)
+    resp.records.filter_map.with_index do |record, i|
+      { record: batch[i], error_message: record.error_message } if record.responds_to?(:error_message)
     end
   end
 
@@ -102,7 +109,7 @@ class KinesisClient
     end
   end
 
-  def decode_failed_records
-    @failed_records = @failed_records.map { |record| avro.decode(record) }
+  def failed_records
+    @failed_records.map { |record| avro.decode(record) }
   end
 end
