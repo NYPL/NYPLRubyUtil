@@ -96,13 +96,13 @@ class KinesisClient
 
   def retry_failed_records
     unless @failed_records.empty?
-      @records = @failed_records.flatten
+      @records = @failed_records
       @failed_records = []
       push_records
     end
   end
 
   def decode_failed_records
-    @failed_records = @failed_records.flatten.map { |record| avro.decode(record) }
+    @failed_records = @failed_records.map { |record| avro.decode(record) }
   end
 end

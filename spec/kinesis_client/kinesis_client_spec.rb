@@ -225,10 +225,10 @@ describe KinesisClient do
         @kinesis_client << '2'
         @kinesis_client.filter_failures(@mock_failed_response,[{:data=>"encoded 1", :partition_key=>"hashed"},{:data=>"encoded 2", :partition_key=>"hashed"}])
 
-      expect(@kinesis_client.failed_records.flatten).to eql([{:data=>"encoded 2", :partition_key=>"hashed"}])
+      expect(@kinesis_client.failed_records).to eql([{:data=>"encoded 2", :partition_key=>"hashed"}])
     end 
 
-    it "should create a nested array @failed_records when there are failures across batches" do
+    it "should update @failed_records when there are failures across batches" do
       kinesis_client = KinesisClient.new({
         schema_string: 'really_fake_schema',
         stream_name: 'fake-stream',
