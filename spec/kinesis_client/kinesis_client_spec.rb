@@ -276,14 +276,34 @@ describe KinesisClient do
     it "should return records and their error messages that do not enter the kinesis stream" do
         @kinesis_client << '1'
         @kinesis_client << '2'
-        expect(@kinesis_client.filter_failures(@mock_failed_response,[{:data=>"encoded 1", :partition_key=>"hashed"},{:data=>"encoded 2", :partition_key=>"hashed"}]))
+        batch = [{:data=>"encoded 1", :partition_key=>"hashed"},{:data=>"encoded 2", :partition_key=>"hashed"}]
+        expect(@kinesis_client
+          .filter_failures(@mock_failed_response, batch))
           .to eql([{ :record=>{ :data=>"encoded 2", :partition_key=>"hashed" }, :error_message=>"error" }])
     end
+  end
+
   describe "#failed_records" do
     it "should return decoded failed records" do
+      allow(@mock_client).to receive(:put_records).with({
+        records: [
+          {
+            data: "encoded 1",
+            partition_key: "hashed"
+          },
+          {
+            data: "encoded 2",
+            partition_key: "hashed"
+          }
+        ],
+        stream_name: 'fake-stream'
+      }).and_return(@mock_failed_response)
+      @kinesis_client << '1'
+      @kinesis_client << '2'
+      @kinesis_client.push_records
+      expect(@kinesis_client.failed_records).to eql(['2'])
     end
   end
-end
 
 
   describe "#push_record" do
