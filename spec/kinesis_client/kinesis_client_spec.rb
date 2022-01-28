@@ -217,7 +217,7 @@ describe KinesisClient do
     end
 
     it "push_batch should update @failed_records" do
-    end 
+    end
 
     it "push_batch should log success when all records succeed" do
       allow(@mock_client).to receive(:put_records).with({
@@ -304,7 +304,6 @@ describe KinesisClient do
       expect(@kinesis_client.failed_records).to eql(['2'])
     end
   end
-
 
   describe "#push_record" do
 
