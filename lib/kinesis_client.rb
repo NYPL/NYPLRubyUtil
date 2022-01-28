@@ -13,11 +13,6 @@ class KinesisClient
     @stream_name = @config[:stream_name]
     @avro = nil
     @batch_size = @config[:batch_size] || 1
-<<<<<<< HEAD
-=======
-    @client_options = set_config(config)
-    @batch_count = 0
->>>>>>> master
     @records = []
     @failed_records = []
     @automatically_push = !(@config[:automatically_push] == false)
