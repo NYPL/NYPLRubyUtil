@@ -5,7 +5,7 @@ This gem contains several utility classes for common tasks in Ruby applications 
 
 ## Version
 
-`0.0.8`
+`0.0.9`
 
 ## Installation
 
@@ -241,6 +241,11 @@ The currently used parameters for config are:
 
 `profile` For local use
 
+`custom_aws_config` An object passed to the Aws Kinesis Client instead of `profile`, when more specific configuration is necessary, e.g.
+```
+{ region: 'region', access_key_id: 'access_key_id', secret_access_key: 'secret_access_key'}
+```
+
 
 
 KinesisClient can also be configured to push events in batches:
@@ -262,7 +267,7 @@ If `config[:automatically_push]` is set to false, it will not push records to ki
 
 Call `push_records` when all records have been entered to push any remaining records to kinesis
 
-Method `push_record` is currently broken. 
+Method `push_record` is currently broken.
 
 ### Deploying In CI/CD
 

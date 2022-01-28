@@ -1,5 +1,8 @@
 # Changelog
 
+## v0.0.9
+- Add generic `custom_aws_config` in `KinesisClient`
+
 ## v0.0.8
 - Error logging for batched records in Kinesis Client
 
