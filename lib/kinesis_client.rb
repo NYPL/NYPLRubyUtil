@@ -12,7 +12,6 @@ class KinesisClient
     @stream_name = @config[:stream_name]
     @avro = nil
     @batch_size = @config[:batch_size] || 1
-    @batch_count = 0
     @records = []
     @failed_records = []
     @automatically_push = !(@config[:automatically_push] == false)
@@ -77,28 +76,22 @@ class KinesisClient
       records: batch.to_a,
       stream_name: @stream_name
     })
-    puts resp.failed_record_count
-    filter_failures(resp) if resp.failed_record_count > 0
+    filter_failures(resp, batch) if resp.failed_record_count > 0
   end
 
   def push_records
     if @records.length > 0 
       @records.each_slice(@batch_size) do |slice|
         push_batch(slice)
-        @batch_count += 1
       end
       @records = []
-      @batch_count = 0
     end
   end
 
-  def filter_failures(resp)
-    failed_records = resp.records.filter_map.with_index do |record, i|
-      
-      @records[i + @batch_size * @batch_count] if record.responds_to?(:error_message)
+  def filter_failures(resp, batch)
+    resp.records.each_with_index do |record, i|
+      @failed_records << batch[i] if record.responds_to?(:error_message)
     end
-    @failed_records << failed_records
-    puts @failed_records
   end
 
   def retry_failed_records

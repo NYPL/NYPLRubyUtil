@@ -223,7 +223,7 @@ describe KinesisClient do
     it "should push encoded records that did not enter the kinesis stream to @failed_records" do
         @kinesis_client << '1'
         @kinesis_client << '2'
-        @kinesis_client.filter_failures(@mock_failed_response)
+        @kinesis_client.filter_failures(@mock_failed_response,[{:data=>"encoded 1", :partition_key=>"hashed"},{:data=>"encoded 2", :partition_key=>"hashed"}])
 
       expect(@kinesis_client.failed_records.flatten).to eql([{:data=>"encoded 2", :partition_key=>"hashed"}])
     end 
@@ -278,7 +278,7 @@ describe KinesisClient do
       kinesis_client << '4'
       kinesis_client << '5'
       kinesis_client.push_records
-      expect(kinesis_client.failed_records).to eql([[{:data=>"encoded 3", :partition_key=>"hashed"}],[{:data=>"encoded 5", :partition_key=>"hashed"}]])
+      expect(kinesis_client.failed_records).to eql([{:data=>"encoded 3", :partition_key=>"hashed"},{:data=>"encoded 5", :partition_key=>"hashed"}])
     end
   end
 
