@@ -21,13 +21,6 @@ describe PlatformApiClient do
 
 
     it "should retry in case of 401 response" do
-      # unauthorized_response = double
-      # allow(unauthorized_response).to receive(:code).and_return(401)
-      # authorized_response = double
-      # allow(authorized_response).to receive(:code).and_return(200)
-      # authorized_response_body = { success: true }.to_json
-      # allow(authorized_response).to receive(:body).and_return(authorized_response_body)
-      # allow(Net::HTTP).to receive(:start).and_return(unauthorized_response, authorized_response)
       stub_request(:any, /oauth/).to_return(body: { "access_token" => "token" }.to_json, status: 200)
       stub_request(:any, /platform/).to_return(
         { body: "not authenticated".to_json, status: 401 },
