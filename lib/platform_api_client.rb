@@ -21,7 +21,7 @@ class PlatformApiClient
     @error_options = default_errors.merge(options[:errors] || {})
   end
 
-  def get (path)
+  def get (path, transaction_data = {})
 
     authenticate! if authenticated
 
@@ -38,7 +38,7 @@ class PlatformApiClient
 
       $logger.debug "Got platform api response", { code: response.code, body: response.body }
 
-      parse_json_response response, path
+      parse_json_response response, path, transaction_data
 
     rescue Exception => e
       raise StandardError.new(e), "Failed to retrieve #{path} #{e.message}"
@@ -47,12 +47,12 @@ class PlatformApiClient
 
   private
 
-  def parse_json_response (response, path)
+  def parse_json_response (response, path, transaction_data = {})
     code = response.code.to_i
     if code < 400
       JSON.parse(response.body)
     elsif error_options[code]
-      instance_exec(response, path, &error_options[code])
+      instance_exec(response, path, transaction_data, &error_options[code])
     else
       raise "Error interpretting response for path #{path}: (#{response.code}): #{response.body}"
       {}
@@ -92,12 +92,13 @@ class PlatformApiClient
 
   def default_errors
     {
-      401 => lambda do |response, path|
-        if @try_count < 1
+      401 => lambda do |response, path, transaction_data = {}|
+        transaction_data[:try_count] ||= 0
+        if transaction_data[:try_count] < 1
           # Likely an expired access-token; Wipe it for next run
-          @try_count += 1
+          transaction_data[:try_count] += 1
           access_token = nil
-          get(path)
+          get(path, transaction_data)
         else
           raise "Error interpretting response for path #{path}: (#{response.code}): #{response.body}"
         end

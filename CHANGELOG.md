@@ -1,5 +1,8 @@
 # Changelog
 
+## v0.0.10
+- Fix bug in retrying platform api requests in case of authentication errors
+
 ## v0.0.9
 - Add generic `custom_aws_config` in `KinesisClient`
 
