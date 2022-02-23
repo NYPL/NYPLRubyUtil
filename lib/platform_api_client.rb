@@ -97,7 +97,7 @@ class PlatformApiClient
         if transaction_data[:try_count] < 1
           # Likely an expired access-token; Wipe it for next run
           transaction_data[:try_count] += 1
-          access_token = nil
+          self.access_token = nil
           get(path, transaction_data)
         else
           raise "Error interpretting response for path #{path}: (#{response.code}): #{response.body}"
