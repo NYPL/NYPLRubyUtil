@@ -5,6 +5,7 @@ require_relative "errors"
 # Model representing the result message posted to Kinesis stream about everything that has gone on here -- good, bad, or otherwise.
 
 class KinesisClient
+  #note custom defined :failed_records method
   attr_reader :config, :avro
 
   def initialize(config)
@@ -13,8 +14,8 @@ class KinesisClient
     @avro = nil
     @batch_size = @config[:batch_size] || 1
     @client_options = set_config(config)
-    @batch_count = 0
     @records = []
+    @failed_records = []
     @automatically_push = !(@config[:automatically_push] == false)
     @client = Aws::Kinesis::Client.new(@client_options)
 
@@ -52,6 +53,7 @@ class KinesisClient
   end
 
 #This method is broken
+#TO DO: figure out how to determine successful or failed record, successful? is not a method on the object
   def push_record(json_message)
     record = convert_to_record(json_message)
     record[:stream_name] = @stream_name
@@ -85,13 +87,10 @@ class KinesisClient
       records: batch.to_a,
       stream_name: @stream_name
     })
-
     if resp.failed_record_count > 0
-      failure_message = {
-        failures: resp.failed_record_count,
-        failures_data: filter_failures(resp)
-      }
-      $logger.warn("Batch sent to #{config[:stream_name]} with failures: #{failure_message}")
+      failures = filter_failures(resp, batch) 
+      $logger.warn("Batch sent to #{config[:stream_name]} with #{failures.length} failures: #{failures}")
+      failures.each{|failure| @failed_records << failure[:record]}
     else
       $logger.info("Batch sent to #{config[:stream_name]} successfully")
     end
@@ -101,16 +100,26 @@ class KinesisClient
     if @records.length > 0
       @records.each_slice(@batch_size) do |slice|
         push_batch(slice)
-        @batch_count += 1
       end
       @records = []
-      @batch_count = 0
     end
   end
 
-  def filter_failures(resp)
+  def filter_failures(resp, batch)
     resp.records.filter_map.with_index do |record, i|
-      avro.decode(@records[i + @batch_size * @batch_count]) if record.responds_to?(:error_message)
+      { record: batch[i], error_message: record.error_message } if record.responds_to?(:error_message)
     end
+  end
+
+  def retry_failed_records
+    unless @failed_records.empty?
+      @records = @failed_records
+      @failed_records = []
+      push_records
+    end
+  end
+
+  def failed_records
+    @failed_records.map { |record| avro.decode(record) }
   end
 end

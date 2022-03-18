@@ -47,9 +47,19 @@ describe KinesisClient do
       $logger = double()
       allow($logger).to receive(:debug)
       allow($logger).to receive(:info)
+      allow($logger).to receive(:warn)
       @mock_resp = double()
       allow(@mock_resp).to receive(:failed_record_count).and_return(0)
       allow(@mock_resp).to receive(:records).and_return([])
+      @mock_failed_response = double
+      @mock_failed_record = double
+      @mock_success_record = double
+      allow(@mock_failed_record).to receive(:error_message).and_return("error")
+      allow(@mock_failed_record).to receive(:responds_to?).with(:error_message).and_return(true)
+      allow(@mock_success_record).to receive(:responds_to?).with(:error_message).and_return(false)
+      allow(@mock_failed_response).to receive(:failed_record_count).and_return(1)
+      allow(@mock_failed_response).to receive(:records)
+        .and_return([@mock_success_record, @mock_failed_record])
   end
 
   describe :config do
@@ -228,51 +238,8 @@ describe KinesisClient do
       @kinesis_client << '5'
       @kinesis_client.push_records
     end
-  end
 
-  describe "#filter_failures" do
-    before(:each) do
-      @mock_failed_response = double
-      @mock_failed_record = double
-      @mock_success_record = double
-      allow(@mock_failed_record).to receive(:error_message).and_return("error")
-      allow(@mock_failed_record).to receive(:responds_to?).with(:error_message).and_return(true)
-      allow(@mock_success_record).to receive(:responds_to?).with(:error_message).and_return(false)
-      allow(@mock_failed_response).to receive(:failed_record_count).and_return(1)
-      allow(@mock_failed_response).to receive(:records)
-        .and_return([@mock_success_record, @mock_failed_record])
-
-    end
-    it "should return records that failed to enter the kinesis stream" do
-        @kinesis_client << '1'
-        @kinesis_client << '2'
-
-      expect(@kinesis_client.filter_failures(@mock_failed_response)).to eql(["2"])
-    end 
-
-    it "should trigger the logger to warn when there are failed records" do
-      allow(@mock_client).to receive(:put_records).with({
-            records: [
-              {
-                data: "encoded 4",
-                partition_key: "hashed"
-              },
-              {
-                data: "encoded 5",
-                partition_key: "hashed"
-              }
-            ],
-            stream_name: 'fake-stream'
-          }).and_return(@mock_failed_response)
-
-      expect($logger).to receive(:warn).with("Batch sent to fake-stream with failures: {:failures=>1, :failures_data=>[\"5\"]}")
-      
-      @kinesis_client << '4'
-      @kinesis_client << '5'
-      @kinesis_client.push_records
-    end
-
-    it "should trigger the logger to indicate success when all records are sent successfully" do
+    it "push_batch should log success when all records succeed" do
       allow(@mock_client).to receive(:put_records).with({
           records: [
             {
@@ -301,58 +268,46 @@ describe KinesisClient do
         @kinesis_client << '3'
     end
 
-    it "should filter failures from records arrays longer than the batch size" do
-      kinesis_client = KinesisClient.new({
-        schema_string: 'really_fake_schema',
-        stream_name: 'fake-stream',
-        batch_size: 3,
-        automatically_push: false
-      })
-      mock_response = double
-
-      allow(mock_response).to receive(:failed_record_count).and_return(1)
-        allow(@mock_client).to receive(:put_records).with({
-          records: [
-            {
-              data: "encoded 1",
-              partition_key: "hashed"
-            },
-            {
-              data: "encoded 2",
-              partition_key: "hashed"
-            },
-            {
-              data: "encoded 3",
-              partition_key: "hashed"
-            },
-          ],
-          stream_name: 'fake-stream'
-        }).and_return(@mock_resp)
+    it "push_batch should log failed records with respective error messages" do
       allow(@mock_client).to receive(:put_records).with({
-            records: [
-              {
-                data: "encoded 4",
-                partition_key: "hashed"
-              },
-              {
-                data: "encoded 5",
-                partition_key: "hashed"
-              }
-            ],
-            stream_name: 'fake-stream'
-          }).and_return(@mock_failed_response)
+        records: [
+          {
+            data: "encoded 4",
+            partition_key: "hashed"
+          },
+          {
+            data: "encoded 5",
+            partition_key: "hashed"
+          }
+        ],
+        stream_name: 'fake-stream'
+      }).and_return(@mock_failed_response)
 
-      expect($logger).to receive(:warn).with("Batch sent to fake-stream with failures: {:failures=>1, :failures_data=>[\"5\"]}")
-      kinesis_client << '1'
-      kinesis_client << '2'
-      kinesis_client << '3'
-      kinesis_client << '4'
-      kinesis_client << '5'
-      kinesis_client.push_records
+      expect($logger).to receive(:warn)
+      .with("Batch sent to fake-stream with 1 failures: [{:record=>{:data=>\"encoded 5\", :partition_key=>\"hashed\"}, :error_message=>\"error\"}]")
+    
+      @kinesis_client << '4'
+      @kinesis_client << '5'
+      @kinesis_client.push_records
     end
-
   end
 
+  describe "#filter_failures" do
+    it "should return records and their error messages that do not enter the kinesis stream" do
+        batch = [{:data=>"encoded 1", :partition_key=>"hashed"},{:data=>"encoded 2", :partition_key=>"hashed"}]
+        @kinesis_client.instance_variable_set(:@records, batch)
+        expect(@kinesis_client
+          .filter_failures(@mock_failed_response, batch))
+          .to eql([{ :record=>{ :data=>"encoded 2", :partition_key=>"hashed" }, :error_message=>"error" }])
+    end
+  end
+
+  describe "#failed_records" do
+    it "should return decoded failed records" do
+      @kinesis_client.instance_variable_set(:@failed_records,[{:data=>"encoded 2", :partition_key=>"hashed"}] )
+      expect(@kinesis_client.failed_records).to eql(['2'])
+    end
+  end
 
   describe "#push_record" do
 
