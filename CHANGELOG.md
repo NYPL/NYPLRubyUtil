@@ -1,5 +1,8 @@
 # Changelog
 
+## v0.1.0
+- Utilize push_records for batching of records in KinesisClient
+
 ## v0.0.10
 - Fix bug in retrying platform api requests in case of authentication errors
 

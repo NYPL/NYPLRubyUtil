@@ -1,7 +1,7 @@
 Gem::Specification.new do |s|
   s.name = "nypl_ruby_util"
   s.version = "0.0.10"
-  s.date = "2020-09-08"
+  s.date = "2022-03-28"
   s.description = "A repository of common utilities for NYPL Ruby application"
   s.summary = "A repository of common utilities for NYPL Ruby application"
   s.add_runtime_dependency "avro",
