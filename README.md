@@ -5,7 +5,7 @@ This gem contains several utility classes for common tasks in Ruby applications 
 
 ## Version
 
-`0.1.0`
+`0.1.1`
 
 ## Installation
 
@@ -353,5 +353,7 @@ This repo uses a single, versioned `master` branch.
 
  * Create feature branch off `master`
  * Compute next logical version and update `README.md`, `CHANGELOG.md`, & `nypl_ruby_util.gemspec`
+ * Run `gem build nypl_ruby_util.gemspec` 
  * Create PR against `master`
+ * After approval, publish gem by running `gem push nypl_ruby_util-version.gem`
  * After merging the PR, git tag `master` with new version number.

@@ -1,6 +1,6 @@
 Gem::Specification.new do |s|
   s.name = "nypl_ruby_util"
-  s.version = "0.1.0"
+  s.version = "0.1.1"
   s.date = "2022-03-28"
   s.description = "A repository of common utilities for NYPL Ruby application"
   s.summary = "A repository of common utilities for NYPL Ruby application"
