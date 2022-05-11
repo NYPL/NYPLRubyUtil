@@ -5,7 +5,7 @@ This gem contains several utility classes for common tasks in Ruby applications 
 
 ## Version
 
-`0.1.0`
+`0.1.1`
 
 ## Installation
 
